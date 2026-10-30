@@ -7,62 +7,55 @@
     android:fitsSystemWindows="true"
     android:background="#131314">
 
-    <!-- Google Play Store Search Bar Header (Full width, no mic, no avatar, no sponsor) -->
-    <androidx.cardview.widget.CardView
+    <!-- Google Play Store Search Bar Header (Full width, transparent background with border) -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="10dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="2dp"
-        app:cardBackgroundColor="#2A2B2E">
+        android:background="@drawable/bg_store_search_bar"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/store_back_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Volver"
+            app:tint="#E3E3E3" />
+
+        <EditText
+            android:id="@+id/store_search_input"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="14dp">
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
+            android:background="@null"
+            android:hint="@string/store_search_hint"
+            android:textColor="#E3E3E3"
+            android:textColorHint="#9AA0A6"
+            android:textSize="14sp"
+            android:singleLine="true"
+            android:imeOptions="actionSearch"
+            android:inputType="text" />
 
-            <ImageView
-                android:id="@+id/store_back_button"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:padding="4dp"
-                android:src="@drawable/ic_arrow_back"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Volver"
-                app:tint="#E3E3E3" />
-
-            <EditText
-                android:id="@+id/store_search_input"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="8dp"
-                android:background="@null"
-                android:hint="@string/store_search_hint"
-                android:textColor="#E3E3E3"
-                android:textColorHint="#9AA0A6"
-                android:textSize="14sp"
-                android:singleLine="true"
-                android:imeOptions="actionSearch"
-                android:inputType="text" />
-
-            <ImageView
-                android:id="@+id/store_search_clear"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:padding="4dp"
-                android:src="@drawable/ic_clear"
-                android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Borrar búsqueda"
-                android:visibility="gone"
-                app:tint="#9AA0A6" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+        <ImageView
+            android:id="@+id/store_search_clear"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_clear"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Borrar búsqueda"
+            android:visibility="gone"
+            app:tint="#9AA0A6" />
+    </LinearLayout>
 
     <!-- Subtitle / Categories Header (Google Play Style Chips) -->
     <HorizontalScrollView
@@ -90,7 +83,8 @@
                 android:paddingHorizontal="14dp"
                 android:layout_marginEnd="8dp"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
 
             <TextView
                 android:id="@+id/chip_top_tools"
@@ -104,7 +98,8 @@
                 android:paddingHorizontal="14dp"
                 android:layout_marginEnd="8dp"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
 
             <TextView
                 android:id="@+id/chip_dev"
@@ -118,7 +113,8 @@
                 android:paddingHorizontal="14dp"
                 android:layout_marginEnd="8dp"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
 
             <TextView
                 android:id="@+id/chip_system"
@@ -132,7 +128,8 @@
                 android:paddingHorizontal="14dp"
                 android:layout_marginEnd="8dp"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
 
             <TextView
                 android:id="@+id/chip_ai_cli"
@@ -145,7 +142,8 @@
                 android:textSize="13sp"
                 android:paddingHorizontal="14dp"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
         </LinearLayout>
     </HorizontalScrollView>
 

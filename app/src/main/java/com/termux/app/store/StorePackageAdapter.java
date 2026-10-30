@@ -48,7 +48,14 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
         StorePackageItem item = mItems.get(position);
 
         holder.titleView.setText(item.getTitle());
-        holder.categoryView.setText(item.getCategory() + " • " + item.getRating() + " • " + item.getSize());
+        String ratingText = item.getRating() + " • " + item.getSize();
+        android.text.SpannableString ratingSpannable = new android.text.SpannableString(ratingText);
+        int starIdx = ratingText.indexOf('★');
+        if (starIdx >= 0) {
+            ratingSpannable.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#AECBFA")),
+                starIdx, starIdx + 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        holder.ratingSizeView.setText(ratingSpannable);
         holder.descriptionView.setText(item.getDescription());
         holder.iconView.setImageResource(item.getIconResId());
 
@@ -102,7 +109,7 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
     static class PackageViewHolder extends RecyclerView.ViewHolder {
         final ImageView iconView;
         final TextView titleView;
-        final TextView categoryView;
+        final TextView ratingSizeView;
         final TextView descriptionView;
         final MaterialButton actionButton;
         final MaterialButton secondaryButton;
@@ -111,7 +118,7 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
             super(itemView);
             iconView = itemView.findViewById(R.id.package_icon);
             titleView = itemView.findViewById(R.id.package_title);
-            categoryView = itemView.findViewById(R.id.package_category);
+            ratingSizeView = itemView.findViewById(R.id.package_rating_size);
             descriptionView = itemView.findViewById(R.id.package_description);
             actionButton = itemView.findViewById(R.id.package_action_button);
             secondaryButton = itemView.findViewById(R.id.package_secondary_button);
