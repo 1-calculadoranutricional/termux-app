@@ -10,7 +10,7 @@
     <!-- Google Play Store Search Bar Header (Full width, transparent background with border) -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="52dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="10dp"
@@ -73,7 +73,7 @@
             <TextView
                 android:id="@+id/chip_for_you"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
+                android:layout_height="38dp"
                 android:gravity="center"
                 android:background="@drawable/bg_store_chip_selected"
                 android:text="Para ti"
@@ -89,7 +89,7 @@
             <TextView
                 android:id="@+id/chip_top_tools"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
+                android:layout_height="38dp"
                 android:gravity="center"
                 android:background="@drawable/bg_store_chip_unselected"
                 android:text="Top herramientas"
@@ -104,7 +104,7 @@
             <TextView
                 android:id="@+id/chip_dev"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
+                android:layout_height="38dp"
                 android:gravity="center"
                 android:background="@drawable/bg_store_chip_unselected"
                 android:text="Desarrollo"
@@ -119,7 +119,7 @@
             <TextView
                 android:id="@+id/chip_system"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
+                android:layout_height="38dp"
                 android:gravity="center"
                 android:background="@drawable/bg_store_chip_unselected"
                 android:text="Sistema"
@@ -134,7 +134,7 @@
             <TextView
                 android:id="@+id/chip_ai_cli"
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
+                android:layout_height="38dp"
                 android:gravity="center"
                 android:background="@drawable/bg_store_chip_unselected"
                 android:text="IA y CLI"
