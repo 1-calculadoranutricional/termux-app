@@ -69,21 +69,21 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
         if (item.getBinaryCheckPath() == null) {
             // Task/utility action (e.g. Storage, Backup, Restore)
             holder.actionButton.setText("Ejecutar");
-            holder.extraActionsContainer.setVisibility(View.GONE);
+            holder.secondaryButton.setVisibility(View.GONE);
         } else if (isInstalled) {
             holder.actionButton.setText("Actualizar");
             if (item.getUninstallCommand() != null) {
-                holder.extraActionsContainer.setVisibility(View.VISIBLE);
+                holder.secondaryButton.setVisibility(View.VISIBLE);
                 holder.secondaryButton.setText("Desinstalar");
                 holder.secondaryButton.setOnClickListener(v -> {
                     if (mListener != null) mListener.onSecondaryActionClick(item);
                 });
             } else {
-                holder.extraActionsContainer.setVisibility(View.GONE);
+                holder.secondaryButton.setVisibility(View.GONE);
             }
         } else {
             holder.actionButton.setText("Instalar");
-            holder.extraActionsContainer.setVisibility(View.GONE);
+            holder.secondaryButton.setVisibility(View.GONE);
         }
 
         final boolean finalIsInstalled = isInstalled;
@@ -106,7 +106,6 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
         final TextView descriptionView;
         final MaterialButton actionButton;
         final MaterialButton secondaryButton;
-        final View extraActionsContainer;
 
         PackageViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -116,7 +115,6 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
             descriptionView = itemView.findViewById(R.id.package_description);
             actionButton = itemView.findViewById(R.id.package_action_button);
             secondaryButton = itemView.findViewById(R.id.package_secondary_button);
-            extraActionsContainer = itemView.findViewById(R.id.package_extra_actions_container);
         }
     }
 }

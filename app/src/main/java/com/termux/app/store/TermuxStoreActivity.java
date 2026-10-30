@@ -146,7 +146,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     private void updateChipVisuals() {
         int selectedBg = R.drawable.bg_store_chip_selected;
         int unselectedBg = R.drawable.bg_store_chip_unselected;
-        int selectedText = Color.parseColor("#00E676");
+        int selectedText = Color.parseColor("#AECBFA");
         int unselectedText = Color.parseColor("#9AA0A6");
 
         setChipState(mChipForYou, mCurrentCategoryFilter == null, selectedBg, unselectedBg, selectedText, unselectedText);
@@ -416,14 +416,14 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
                 "  while [ ${#line} -lt \"$target\" ]; do line=\"${line}${d}\"; done\n" +
                 "  echo -e \"\\033[90m${line:0:$target}\\033[0m\"\n" +
                 "}\n" +
-                "echo -e '\\033[1;32m●\\033[0m \\033[1;33mTermux Play Store: " + title + "\\033[0m'\n" +
+                "echo -e '\\033[1;34m●\\033[0m \\033[1;33mTermux Play Store: " + title + "\\033[0m'\n" +
                 "echo -e '\\033[1;34m$ " + shellCommand.replace("'", "'\\''") + "\\033[0m'\n" +
                 "draw_divider\n" +
                 shellCommand + "\n" +
                 "EXIT_CODE=$?\n" +
                 "draw_divider\n" +
                 "if [ $EXIT_CODE -eq 0 ]; then\n" +
-                "  echo -e '\\033[1;32m●\\033[0m \\033[1;33mProceso finalizado con éxito (código 0)\\033[0m'\n" +
+                "  echo -e '\\033[1;34m●\\033[0m \\033[1;33mProceso finalizado con éxito (código 0)\\033[0m'\n" +
                 "else\n" +
                 "  echo -e '\\033[1;31m●\\033[0m \\033[1;33mError al ejecutar (código '$EXIT_CODE')\\033[0m'\n" +
                 "fi\n" +

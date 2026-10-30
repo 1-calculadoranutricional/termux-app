@@ -37,12 +37,13 @@
         <item name="extraKeysButtonActiveBackgroundColor">@color/grey_500</item>
     </style>
 
-    <!-- TermuxStore theme - Google Play Store aesthetic with zero red -->
+    <!-- TermuxStore theme - Google Play Store aesthetic with zero green -->
     <style name="Theme.TermuxStore" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#01875F</item>
+        <item name="colorPrimary">#AECBFA</item>
         <item name="colorPrimaryVariant">#131314</item>
-        <item name="colorSecondary">#01875F</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#AECBFA</item>
+        <item name="colorOnPrimary">#001D35</item>
+        <item name="colorControlHighlight">#26AECBFA</item>
         <item name="android:statusBarColor">#131314</item>
         <item name="android:navigationBarColor">#131314</item>
         <item name="android:windowBackground">#131314</item>
