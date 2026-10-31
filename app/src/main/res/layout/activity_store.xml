@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="#131314">
+    android:background="#000000">
 
     <!-- Google Play Store Search Bar Header (Full width, transparent background with border) -->
     <LinearLayout
@@ -75,7 +75,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
                 android:gravity="center"
-                android:background="@drawable/bg_store_chip_selected"
+                android:background="@drawable/bg_store_chip_ripple"
                 android:text="Para ti"
                 android:textColor="#AECBFA"
                 android:textStyle="bold"
@@ -91,7 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
                 android:gravity="center"
-                android:background="@drawable/bg_store_chip_unselected"
+                android:background="@drawable/bg_store_chip_ripple"
                 android:text="Top herramientas"
                 android:textColor="#9AA0A6"
                 android:textSize="13sp"
@@ -106,7 +106,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
                 android:gravity="center"
-                android:background="@drawable/bg_store_chip_unselected"
+                android:background="@drawable/bg_store_chip_ripple"
                 android:text="Desarrollo"
                 android:textColor="#9AA0A6"
                 android:textSize="13sp"
@@ -121,7 +121,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
                 android:gravity="center"
-                android:background="@drawable/bg_store_chip_unselected"
+                android:background="@drawable/bg_store_chip_ripple"
                 android:text="Sistema"
                 android:textColor="#9AA0A6"
                 android:textSize="13sp"
@@ -136,7 +136,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
                 android:gravity="center"
-                android:background="@drawable/bg_store_chip_unselected"
+                android:background="@drawable/bg_store_chip_ripple"
                 android:text="IA y CLI"
                 android:textColor="#9AA0A6"
                 android:textSize="13sp"

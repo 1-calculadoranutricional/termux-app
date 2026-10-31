@@ -59,8 +59,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         super.onCreate(savedInstanceState);
 
         // Ensure status bar & navigation bar are dark Play Store background with no red margin
-        getWindow().setStatusBarColor(Color.parseColor("#131314"));
-        getWindow().setNavigationBarColor(Color.parseColor("#131314"));
+        getWindow().setStatusBarColor(Color.parseColor("#000000"));
+        getWindow().setNavigationBarColor(Color.parseColor("#000000"));
 
         setContentView(R.layout.activity_store);
 
@@ -144,8 +144,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     }
 
     private void updateChipVisuals() {
-        int selectedBg = R.drawable.bg_store_chip_selected;
-        int unselectedBg = R.drawable.bg_store_chip_unselected;
+        int selectedBg = R.drawable.bg_store_chip_ripple;
+        int unselectedBg = R.drawable.bg_store_chip_ripple;
         int selectedText = Color.parseColor("#AECBFA");
         int unselectedText = Color.parseColor("#9AA0A6");
 

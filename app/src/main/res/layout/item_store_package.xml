@@ -74,59 +74,59 @@
                 android:textColor="#9AA0A6"
                 android:singleLine="true" />
 
-            <!-- Action Buttons Container -->
-            <LinearLayout
-                android:id="@+id/package_buttons_container"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <!-- Secondary Button: Desinstalar -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/package_secondary_button"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:minWidth="0dp"
-                    android:textSize="12sp"
-                    android:textAllCaps="false"
-                    android:textStyle="bold"
-                    android:singleLine="true"
-                    android:maxLines="1"
-                    android:lines="1"
-                    app:cornerRadius="22dp"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#747775"
-                    app:backgroundTint="@android:color/transparent"
-                    android:textColor="#AECBFA"
-                    app:rippleColor="#26AECBFA"
-                    android:visibility="gone" />
-
-                <!-- Primary Action Button: Instalar / Actualizar -->
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/package_action_button"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:textSize="12sp"
-                    android:textAllCaps="false"
-                    android:textStyle="bold"
-                    android:singleLine="true"
-                    android:maxLines="1"
-                    android:lines="1"
-                    app:cornerRadius="22dp"
-                    app:backgroundTint="#AECBFA"
-                    android:textColor="#001D35"
-                    app:rippleColor="#33001D35" />
-
-            </LinearLayout>
-
         </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Action Buttons Container (spans full width under icon and details) -->
+    <LinearLayout
+        android:id="@+id/package_buttons_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Secondary Button: Desinstalar -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/package_secondary_button"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:minWidth="0dp"
+            android:textSize="12sp"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:lines="1"
+            app:cornerRadius="22dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#747775"
+            app:backgroundTint="@android:color/transparent"
+            android:textColor="#AECBFA"
+            app:rippleColor="#26AECBFA"
+            android:visibility="gone" />
+
+        <!-- Primary Action Button: Instalar / Actualizar -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/package_action_button"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:minWidth="0dp"
+            android:textSize="12sp"
+            android:textAllCaps="false"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:maxLines="1"
+            android:lines="1"
+            app:cornerRadius="22dp"
+            app:backgroundTint="#AECBFA"
+            android:textColor="#001D35"
+            app:rippleColor="#33001D35" />
 
     </LinearLayout>
 
