@@ -146,7 +146,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     private void updateChipVisuals() {
         int selectedBg = R.drawable.bg_store_chip_ripple;
         int unselectedBg = R.drawable.bg_store_chip_ripple;
-        int selectedText = Color.parseColor("#AECBFA");
+        int selectedText = Color.parseColor("#9AA0A6");
         int unselectedText = Color.parseColor("#9AA0A6");
 
         setChipState(mChipForYou, mCurrentCategoryFilter == null, selectedBg, unselectedBg, selectedText, unselectedText);
@@ -232,7 +232,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "IA & Herramientas • Asistente de Código",
             "Agente inteligente para desarrollo de software avanzado, pairing y automatización completa.",
             R.drawable.ic_store_antigravity,
-            "curl -fsSL https://antigravity.google/cli/install.sh | bash",
+            "curl -fsSL https://antigravity.google/cli/install.sh | bash\n" +
+            "echo 'export PATH=\"/data/data/com.termux/files/home/.local/bin:$PATH\"' >> ~/.zshrc && source ~/.zshrc",
             "rm -rf ~/.gemini/antigravity-cli ~/.local/bin/agy",
             "curl -fsSL https://antigravity.google/cli/install.sh | bash",
             "/data/data/com.termux/files/home/.local/bin/agy",
@@ -300,19 +301,45 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "12 MB"
         ));
 
-        // 7. Zsh & Oh My Zsh
+        // 7. Zsh & Powerlevel10k
         mPackages.add(new StorePackageItem(
             "zsh",
-            "Zsh & Oh My Zsh",
+            "Zsh & Powerlevel10k",
             "Herramientas • Shell Avanzada",
-            "Shell de comandos interactiva con autocompletado inteligente, resaltado de sintaxis y temas.",
+            "Shell Zsh avanzada con Powerlevel10k, autocompletado y resaltado de sintaxis.",
             R.drawable.ic_pkg_terminal,
-            "pkg install zsh curl -y",
+            "pkg install zsh git curl -y\n" +
+            "rm -rf ~/.zsh ~/.zshrc\n" +
+            "mkdir -p ~/.zsh/plugins ~/.zsh/themes\n" +
+            "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zsh/themes/powerlevel10k\n" +
+            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/plugins/zsh-syntax-highlighting\n" +
+            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/plugins/zsh-autosuggestions\n" +
+            "cat << 'EOF' > ~/.zshrc\n" +
+            "if [[ -r \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+            "  source \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+            "fi\n" +
+            "source ~/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme\n" +
+            "[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n" +
+            "source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n" +
+            "source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh\n" +
+            "HISTFILE=~/.zsh_history\n" +
+            "HISTSIZE=10000\n" +
+            "SAVEHIST=10000\n" +
+            "setopt share_history\n" +
+            "setopt hist_ignore_dups\n" +
+            "setopt hist_ignore_all_dups\n" +
+            "setopt hist_expire_dups_first\n" +
+            "setopt hist_ignore_space\n" +
+            "setopt hist_verify\n" +
+            "setopt auto_cd\n" +
+            "EOF\n" +
+            "chsh -s zsh\n" +
+            "exec zsh",
             "pkg uninstall zsh -y",
-            "pkg install zsh -y",
+            "pkg install zsh git curl -y",
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/zsh",
-            "4.8 ★",
-            "15 MB"
+            "4.9 ★",
+            "20 MB"
         ));
 
         // 8. htop
@@ -476,6 +503,31 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/npm",
             "4.8 ★",
             "18 MB"
+        ));
+
+        // 18. CodeGraph CLI
+        mPackages.add(new StorePackageItem(
+            "codegraph",
+            "CodeGraph CLI",
+            "Desarrollo • Análisis de Código",
+            "Instala y configura CodeGraph CLI para análisis de código y navegación de bases de código con grafos.",
+            R.drawable.ic_pkg_code,
+            "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh\n" +
+            "echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.zshrc\n" +
+            "export PATH=\"$HOME/.local/bin:$PATH\"\n" +
+            "mkdir -p \"$HOME/.local/bin\"\n" +
+            "cat << 'EOF' > \"$HOME/.local/bin/codegraph\"\n" +
+            "#!/data/data/com.termux/files/usr/bin/sh\n" +
+            "exec node \\\n" +
+            "  --disable-warning=ExperimentalWarning \\\n" +
+            "  \"$HOME/.codegraph/versions/v1.6.2/lib/dist/bin/codegraph.js\" \"$@\"\n" +
+            "EOF\n" +
+            "chmod +x \"$HOME/.local/bin/codegraph\"",
+            "rm -rf ~/.codegraph ~/.local/bin/codegraph",
+            "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh",
+            "/data/data/com.termux/files/home/.local/bin/codegraph",
+            "4.9 ★",
+            "10 MB"
         ));
     }
 
