@@ -374,6 +374,109 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "4.8 ★",
             "2 MB"
         ));
+
+        // 12. Termux Change Repo
+        mPackages.add(new StorePackageItem(
+            "termux-change-repo",
+            "Cambiar Repositorio",
+            "Sistema • Repositorios",
+            "Ejecuta termux-change-repo para seleccionar espejos (mirrors) de APT rápidos y recomendados.",
+            R.drawable.ic_pkg_terminal,
+            "termux-change-repo",
+            null,
+            null,
+            null,
+            "4.9 ★",
+            "1 MB"
+        ));
+
+        // 13. System Upgrade
+        mPackages.add(new StorePackageItem(
+            "pkg-upgrade-auto",
+            "Actualizar Sistema",
+            "Sistema • Actualización",
+            "Actualiza todos los paquetes e instala actualizaciones manteniendo las configuraciones locales de forma automática.",
+            R.drawable.ic_pkg_monitor,
+            "pkg update -y && pkg upgrade -y -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\"",
+            null,
+            null,
+            null,
+            "4.9 ★",
+            "15 MB"
+        ));
+
+        // 14. Server Speed Test
+        mPackages.add(new StorePackageItem(
+            "mirror-speed-test",
+            "Test Velocidad Mirrors",
+            "Herramientas • Red & Diagnóstico",
+            "Prueba la velocidad de descarga y latencia de los espejos de Termux a nivel mundial (Purdue, FAU, SUSTech, Middlendian, Repository.su).",
+            R.drawable.ic_pkg_monitor,
+            "for servidor in \\\n" +
+            "  \"Norteamérica (Purdue):https://plug-mirror.rcac.purdue.edu/termux/termux-main/dists/stable/main/binary-aarch64/Packages\" \\\n" +
+            "  \"Europa (Alemania - FAU):https://ftp.fau.de/termux/termux-main/dists/stable/main/binary-aarch64/Packages\" \\\n" +
+            "  \"China (SUSTech):https://mirrors.sustech.edu.cn/termux/apt/termux-main/dists/stable/main/binary-aarch64/Packages\" \\\n" +
+            "  \"Oceanía (Middlendian):https://mirrors.middlendian.com/termux/termux-main/dists/stable/main/binary-aarch64/Packages\" \\\n" +
+            "  \"Rusia (Repository.su):https://repository.su/termux/termux-main/dists/stable/main/binary-aarch64/Packages\"; do\n" +
+            "    nombre=\"${servidor%%:*}\"\n" +
+            "    url=\"${servidor#*:}\"\n" +
+            "    echo \"----------------------------------------\"\n" +
+            "    echo \"Probando servidor: $nombre\"\n" +
+            "    curl -s -o /dev/null -w \"-> Velocidad: %{speed_download} bytes/sec | Tiempo: %{time_total} seg\\n\" \"$url\"\n" +
+            "done\n" +
+            "echo \"----------------------------------------\"\n" +
+            "echo \"¡Pruebas finalizadas!\"",
+            null,
+            null,
+            null,
+            "4.8 ★",
+            "2 MB"
+        ));
+
+        // 15. File Utility
+        mPackages.add(new StorePackageItem(
+            "file",
+            "File",
+            "Herramientas • Utilidad de Archivos",
+            "Determina el tipo de un archivo mediante análisis de cabeceras y pruebas mágicas.",
+            R.drawable.ic_pkg_code,
+            "pkg install file -y",
+            "pkg uninstall file -y",
+            "pkg install file -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/file",
+            "4.8 ★",
+            "3 MB"
+        ));
+
+        // 16. GitHub CLI (gh)
+        mPackages.add(new StorePackageItem(
+            "gh",
+            "GitHub CLI (gh)",
+            "Desarrollo • Herramientas Git",
+            "Herramienta oficial de línea de comandos de GitHub para gestionar pull requests, issues y repositorios.",
+            R.drawable.ic_pkg_git,
+            "pkg install gh -y",
+            "pkg uninstall gh -y",
+            "pkg install gh -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/gh",
+            "4.9 ★",
+            "25 MB"
+        ));
+
+        // 17. NPM Update
+        mPackages.add(new StorePackageItem(
+            "npm-update",
+            "NPM (Actualizar)",
+            "Desarrollo • Node.js",
+            "Instala o actualiza Node.js/NPM y ejecuta npm install -g npm para tener la última versión global.",
+            R.drawable.ic_pkg_code,
+            "pkg install npm -y && npm install -g npm",
+            "pkg uninstall npm -y",
+            "pkg install npm -y && npm install -g npm",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/npm",
+            "4.8 ★",
+            "18 MB"
+        ));
     }
 
     @Override
