@@ -378,8 +378,31 @@ public final class TerminalView extends View {
                 return super.deleteSurroundingText(leftLength, rightLength);
             }
 
+            @Override
+            public boolean performEditorAction(int actionCode) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: performEditorAction(" + actionCode + ")");
+                }
+                if (mTermSession != null && !mTermSession.isRunning()) {
+                    mClient.onCodePoint('\r', false, mTermSession);
+                    return true;
+                }
+                sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+                sendKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
+                return true;
+            }
+
             void sendTextToTerminal(CharSequence text) {
                 stopTextSelectionMode();
+                if (mTermSession != null && !mTermSession.isRunning()) {
+                    for (int i = 0; i < text.length(); i++) {
+                        char c = text.charAt(i);
+                        if (c == '\r' || c == '\n') {
+                            mClient.onCodePoint('\r', false, mTermSession);
+                            return;
+                        }
+                    }
+                }
                 final int textLengthInChars = text.length();
                 for (int i = 0; i < textLengthInChars; i++) {
                     char firstChar = text.charAt(i);

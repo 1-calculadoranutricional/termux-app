@@ -254,7 +254,7 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     public boolean onKeyDown(int keyCode, KeyEvent e, TerminalSession currentSession) {
         if (handleVirtualKeys(keyCode, e, true)) return true;
 
-        if (keyCode == KeyEvent.KEYCODE_ENTER && !currentSession.isRunning()) {
+        if ((keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) && !currentSession.isRunning()) {
             mTermuxTerminalSessionActivityClient.removeFinishedSession(currentSession);
             return true;
         } else if (!mActivity.getProperties().areHardwareKeyboardShortcutsDisabled() &&
@@ -472,11 +472,11 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
                 session.writeCodePoint(altDown, resultingCodePoint);
             }
             return true;
+        } else if (!session.isRunning() && (codePoint == '\r' || codePoint == '\n' || codePoint == 13 || codePoint == 10 ||
+                (ctrlDown && (codePoint == 106 /* Ctrl+j or \n */ || codePoint == 109 /* Ctrl+m or \r */ || codePoint == 'j' || codePoint == 'm')))) {
+            mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
+            return true;
         } else if (ctrlDown) {
-            if (codePoint == 106 /* Ctrl+j or \n */ && !session.isRunning()) {
-                mTermuxTerminalSessionActivityClient.removeFinishedSession(session);
-                return true;
-            }
 
             List<KeyboardShortcut> shortcuts = mSessionShortcuts;
             if (shortcuts != null && !shortcuts.isEmpty()) {
