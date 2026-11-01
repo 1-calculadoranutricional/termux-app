@@ -197,7 +197,12 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
     @Override
     public void onSingleTapUp(MotionEvent e) {
-        TerminalEmulator term = mActivity.getCurrentSession().getEmulator();
+        TerminalSession currentSession = mActivity.getCurrentSession();
+        if (currentSession != null && !currentSession.isRunning()) {
+            mTermuxTerminalSessionActivityClient.removeFinishedSession(currentSession);
+            return;
+        }
+        TerminalEmulator term = currentSession.getEmulator();
 
         if (mActivity.getProperties().shouldOpenTerminalTranscriptURLOnClick()) {
             int[] columnAndRow = mActivity.getTerminalView().getColumnAndRow(e, true);
@@ -254,7 +259,7 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
     public boolean onKeyDown(int keyCode, KeyEvent e, TerminalSession currentSession) {
         if (handleVirtualKeys(keyCode, e, true)) return true;
 
-        if ((keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) && !currentSession.isRunning()) {
+        if ((keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) && !currentSession.isRunning()) {
             mTermuxTerminalSessionActivityClient.removeFinishedSession(currentSession);
             return true;
         } else if (!mActivity.getProperties().areHardwareKeyboardShortcutsDisabled() &&
@@ -303,6 +308,12 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent e) {
+        if ((keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) &&
+                mActivity.getCurrentSession() != null && !mActivity.getCurrentSession().isRunning()) {
+            mTermuxTerminalSessionActivityClient.removeFinishedSession(mActivity.getCurrentSession());
+            return true;
+        }
+
         // If emulator is not set, like if bootstrap installation failed and user dismissed the error
         // dialog, then just exit the activity, otherwise they will be stuck in a broken state.
         if (keyCode == KeyEvent.KEYCODE_BACK && mActivity.getTerminalView().mEmulator == null) {

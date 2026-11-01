@@ -333,6 +333,29 @@ public final class TerminalView extends View {
         InputConnection baseInputConnection = new BaseInputConnection(this, true) {
 
             @Override
+            public boolean sendKeyEvent(KeyEvent event) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: sendKeyEvent(" + event + ")");
+                }
+                if (mTermSession != null && !mTermSession.isRunning()) {
+                    int keyCode = event.getKeyCode();
+                    if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                            mClient.onCodePoint('\r', false, mTermSession);
+                        }
+                        return true;
+                    } else if (event.getAction() == KeyEvent.ACTION_MULTIPLE) {
+                        String characters = event.getCharacters();
+                        if (characters != null && (characters.contains("\r") || characters.contains("\n"))) {
+                            mClient.onCodePoint('\r', false, mTermSession);
+                            return true;
+                        }
+                    }
+                }
+                return super.sendKeyEvent(event);
+            }
+
+            @Override
             public boolean finishComposingText() {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) mClient.logInfo(LOG_TAG, "IME: finishComposingText()");
                 super.finishComposingText();
@@ -352,6 +375,17 @@ public final class TerminalView extends View {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: commitText(\"" + text + "\", " + newCursorPosition + ")");
                 }
+                if (mTermSession != null && !mTermSession.isRunning()) {
+                    if (text != null) {
+                        for (int i = 0; i < text.length(); i++) {
+                            char c = text.charAt(i);
+                            if (c == '\r' || c == '\n') {
+                                mClient.onCodePoint('\r', false, mTermSession);
+                                return true;
+                            }
+                        }
+                    }
+                }
                 super.commitText(text, newCursorPosition);
 
                 if (mEmulator == null) return true;
@@ -362,6 +396,25 @@ public final class TerminalView extends View {
                     content.clear();
                 }
                 return true;
+            }
+
+            @Override
+            public boolean setComposingText(CharSequence text, int newCursorPosition) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: setComposingText(\"" + text + "\", " + newCursorPosition + ")");
+                }
+                if (mTermSession != null && !mTermSession.isRunning()) {
+                    if (text != null) {
+                        for (int i = 0; i < text.length(); i++) {
+                            char c = text.charAt(i);
+                            if (c == '\r' || c == '\n') {
+                                mClient.onCodePoint('\r', false, mTermSession);
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return super.setComposingText(text, newCursorPosition);
             }
 
             @Override
@@ -807,9 +860,55 @@ public final class TerminalView extends View {
      * https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:frameworks/base/services/core/jni/com_android_server_input_InputManagerService.cpp;l=616
      */
     @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (mTermSession != null && !mTermSession.isRunning()) {
+            int keyCode = event.getKeyCode();
+            if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    mClient.onCodePoint('\r', false, mTermSession);
+                }
+                return true;
+            } else if (event.getAction() == KeyEvent.ACTION_MULTIPLE) {
+                String characters = event.getCharacters();
+                if (characters != null && (characters.contains("\r") || characters.contains("\n"))) {
+                    mClient.onCodePoint('\r', false, mTermSession);
+                    return true;
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean dispatchKeyEventPreIme(KeyEvent event) {
+        if (mTermSession != null && !mTermSession.isRunning()) {
+            int keyCode = event.getKeyCode();
+            if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    mClient.onCodePoint('\r', false, mTermSession);
+                }
+                return true;
+            } else if (event.getAction() == KeyEvent.ACTION_MULTIPLE) {
+                String characters = event.getCharacters();
+                if (characters != null && (characters.contains("\r") || characters.contains("\n"))) {
+                    mClient.onCodePoint('\r', false, mTermSession);
+                    return true;
+                }
+            }
+        }
+        return super.dispatchKeyEventPreIme(event);
+    }
+
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (TERMINAL_VIEW_KEY_LOGGING_ENABLED)
             mClient.logInfo(LOG_TAG, "onKeyDown(keyCode=" + keyCode + ", isSystem()=" + event.isSystem() + ", event=" + event + ")");
+        if (mTermSession != null && !mTermSession.isRunning()) {
+            if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                mClient.onCodePoint('\r', false, mTermSession);
+                return true;
+            }
+        }
         if (mEmulator == null) return true;
         if (isSelectingText()) {
             stopTextSelectionMode();
@@ -821,6 +920,13 @@ public final class TerminalView extends View {
         } else if (event.isSystem() && (!mClient.shouldBackButtonBeMappedToEscape() || keyCode != KeyEvent.KEYCODE_BACK)) {
             return super.onKeyDown(keyCode, event);
         } else if (event.getAction() == KeyEvent.ACTION_MULTIPLE && keyCode == KeyEvent.KEYCODE_UNKNOWN) {
+            if (mTermSession != null && !mTermSession.isRunning()) {
+                String characters = event.getCharacters();
+                if (characters != null && (characters.contains("\r") || characters.contains("\n"))) {
+                    mClient.onCodePoint('\r', false, mTermSession);
+                    return true;
+                }
+            }
             mTermSession.write(event.getCharacters());
             return true;
         } else if (keyCode == KeyEvent.KEYCODE_LANGUAGE_SWITCH) {
@@ -996,6 +1102,13 @@ public final class TerminalView extends View {
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (TERMINAL_VIEW_KEY_LOGGING_ENABLED)
             mClient.logInfo(LOG_TAG, "onKeyUp(keyCode=" + keyCode + ", event=" + event + ")");
+
+        if (mTermSession != null && !mTermSession.isRunning()) {
+            if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                mClient.onCodePoint('\r', false, mTermSession);
+                return true;
+            }
+        }
 
         // Do not return for KEYCODE_BACK and send it to the client since user may be trying
         // to exit the activity.

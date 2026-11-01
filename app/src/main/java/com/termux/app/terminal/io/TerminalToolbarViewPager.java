@@ -1,5 +1,6 @@
 package com.termux.app.terminal.io;
 
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,6 +78,26 @@ public class TerminalToolbarViewPager {
                         editText.setText("");
                     }
                     return true;
+                });
+
+                editText.setOnKeyListener((v, keyCode, event) -> {
+                    if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                            TerminalSession session = mActivity.getCurrentSession();
+                            if (session != null) {
+                                if (session.isRunning()) {
+                                    String textToSend = editText.getText().toString();
+                                    if (textToSend.length() == 0) textToSend = "\r";
+                                    session.write(textToSend);
+                                } else {
+                                    mActivity.getTermuxTerminalSessionClient().removeFinishedSession(session);
+                                }
+                                editText.setText("");
+                            }
+                            return true;
+                        }
+                    }
+                    return false;
                 });
             }
             collection.addView(layout);
