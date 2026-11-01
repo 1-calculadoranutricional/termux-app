@@ -1,0 +1,6 @@
+{
+  "summary":  "Plan de implementación para habilitar el pegado de texto e imágenes directamente desde el portapapeles de Gboard en Termux, resolviendo rutas locales existentes o guardando capturas para insertar su ruta completa en la sesión activa de la terminal.",
+  "updatedAt":  "2026-11-01T05:55:11.288756663Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}

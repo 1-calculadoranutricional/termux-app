@@ -1,7 +1,10 @@
 package com.termux.shared.termux.terminal;
 
+import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+
+import androidx.core.view.inputmethod.InputContentInfoCompat;
 
 import com.termux.shared.logger.Logger;
 import com.termux.terminal.TerminalSession;
@@ -81,6 +84,11 @@ public class TermuxTerminalViewClientBase implements TerminalViewClient {
 
     @Override
     public boolean onCodePoint(int codePoint, boolean ctrlDown, TerminalSession session) {
+        return false;
+    }
+
+    @Override
+    public boolean onCommitContent(InputContentInfoCompat inputContentInfo, int flags, Bundle opts) {
         return false;
     }
 

@@ -3,11 +3,24 @@ package com.termux.app.terminal;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.media.AudioManager;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.text.TextUtils;
+import androidx.core.view.inputmethod.InputContentInfoCompat;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -797,6 +810,174 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
         String text = ShareUtils.getTextStringFromClipboardIfSet(mActivity, true);
         if (text != null)
             session.getEmulator().paste(text);
+    }
+
+    @Override
+    public boolean onCommitContent(InputContentInfoCompat inputContentInfo, int flags, Bundle opts) {
+        if (inputContentInfo == null) return false;
+        Uri contentUri = inputContentInfo.getContentUri();
+        if (contentUri == null) return false;
+
+        new Thread(() -> {
+            try {
+                String resolvedPath = resolveOrSaveClipboardContent(contentUri, inputContentInfo.getDescription());
+                if (resolvedPath != null && !resolvedPath.isEmpty()) {
+                    mActivity.runOnUiThread(() -> {
+                        TerminalSession session = mActivity.getCurrentSession();
+                        if (session != null && session.isRunning()) {
+                            // User specified: "Sin comillas"
+                            session.write(resolvedPath);
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                Logger.logStackTraceWithMessage(LOG_TAG, "Error handling clipboard content from Gboard", e);
+            }
+        }).start();
+
+        return true;
+    }
+
+    private String resolveOrSaveClipboardContent(Uri contentUri, ClipDescription description) {
+        String filePath = null;
+        String displayName = null;
+
+        if ("file".equalsIgnoreCase(contentUri.getScheme())) {
+            filePath = contentUri.getPath();
+        } else {
+            try (android.database.Cursor cursor = mActivity.getContentResolver().query(
+                    contentUri,
+                    new String[]{MediaStore.MediaColumns.DATA, OpenableColumns.DISPLAY_NAME},
+                    null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int dataIdx = cursor.getColumnIndex(MediaStore.MediaColumns.DATA);
+                    if (dataIdx != -1) {
+                        filePath = cursor.getString(dataIdx);
+                    }
+                    int nameIdx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (nameIdx != -1) {
+                        displayName = cursor.getString(nameIdx);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+
+            if (filePath == null && contentUri.getPath() != null) {
+                String uriPath = contentUri.getPath();
+                if (uriPath.startsWith("/storage/") || uriPath.startsWith("/sdcard/") || uriPath.startsWith("/data/")) {
+                    filePath = uriPath;
+                }
+            }
+        }
+
+        // If a file on disk was located, map it to Termux storage path if applicable
+        if (filePath != null) {
+            File directFile = new File(filePath);
+            if (directFile.exists()) {
+                return mapToTermuxStoragePath(filePath);
+            }
+        }
+
+        // Otherwise save the content stream to Termux storage or clipboard directory
+        return saveContentStreamToFile(contentUri, displayName, description);
+    }
+
+    private String mapToTermuxStoragePath(String filePath) {
+        String homeStorage = TermuxConstants.TERMUX_HOME_DIR_PATH + "/storage";
+
+        if (filePath.startsWith("/storage/emulated/0/DCIM") || filePath.startsWith("/sdcard/DCIM")) {
+            String subPath = filePath.startsWith("/storage/emulated/0/DCIM") ?
+                    filePath.substring("/storage/emulated/0/DCIM".length()) :
+                    filePath.substring("/sdcard/DCIM".length());
+            return homeStorage + "/dcim" + subPath;
+        }
+
+        if (filePath.startsWith("/storage/emulated/0/Pictures") || filePath.startsWith("/sdcard/Pictures")) {
+            String subPath = filePath.startsWith("/storage/emulated/0/Pictures") ?
+                    filePath.substring("/storage/emulated/0/Pictures".length()) :
+                    filePath.substring("/sdcard/Pictures".length());
+            return homeStorage + "/pictures" + subPath;
+        }
+
+        if (filePath.startsWith("/storage/emulated/0/Download") || filePath.startsWith("/sdcard/Download")) {
+            String subPath = filePath.startsWith("/storage/emulated/0/Download") ?
+                    filePath.substring("/storage/emulated/0/Download".length()) :
+                    filePath.substring("/sdcard/Download".length());
+            return homeStorage + "/downloads" + subPath;
+        }
+
+        if (filePath.startsWith("/storage/emulated/0") || filePath.startsWith("/sdcard")) {
+            String subPath = filePath.startsWith("/storage/emulated/0") ?
+                    filePath.substring("/storage/emulated/0".length()) :
+                    filePath.substring("/sdcard".length());
+            File sharedDir = new File(homeStorage + "/shared");
+            if (sharedDir.exists()) {
+                return homeStorage + "/shared" + subPath;
+            }
+        }
+
+        return filePath;
+    }
+
+    private String saveContentStreamToFile(Uri contentUri, String displayName, ClipDescription description) {
+        try {
+            File targetDir = new File(TermuxConstants.TERMUX_HOME_DIR_PATH + "/storage/dcim/Screenshots");
+            if (!targetDir.exists()) {
+                targetDir.mkdirs();
+            }
+            if (!targetDir.canWrite()) {
+                targetDir = new File(TermuxConstants.TERMUX_HOME_DIR_PATH + "/clipboard");
+                if (!targetDir.exists()) {
+                    targetDir.mkdirs();
+                }
+            }
+
+            if (displayName == null || displayName.trim().isEmpty()) {
+                String ext = ".jpg";
+                if (description != null && description.getMimeTypeCount() > 0) {
+                    String mime = description.getMimeType(0);
+                    if ("image/png".equalsIgnoreCase(mime)) {
+                        ext = ".png";
+                    } else if ("image/webp".equalsIgnoreCase(mime)) {
+                        ext = ".webp";
+                    } else if ("image/gif".equalsIgnoreCase(mime)) {
+                        ext = ".gif";
+                    }
+                }
+                String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+                displayName = "Screenshot_" + timestamp + ext;
+            }
+
+            File outputFile = new File(targetDir, displayName);
+            int counter = 1;
+            while (outputFile.exists()) {
+                String nameWithoutExt = displayName;
+                String ext = "";
+                int dotIdx = displayName.lastIndexOf('.');
+                if (dotIdx != -1) {
+                    nameWithoutExt = displayName.substring(0, dotIdx);
+                    ext = displayName.substring(dotIdx);
+                }
+                outputFile = new File(targetDir, nameWithoutExt + "_" + counter + ext);
+                counter++;
+            }
+
+            try (InputStream in = mActivity.getContentResolver().openInputStream(contentUri);
+                 OutputStream out = new FileOutputStream(outputFile)) {
+                if (in == null) return null;
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                out.flush();
+            }
+
+            return outputFile.getAbsolutePath();
+        } catch (Exception e) {
+            Logger.logStackTraceWithMessage(LOG_TAG, "Failed to save clipboard image", e);
+            return null;
+        }
     }
 
 }

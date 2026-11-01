@@ -9,6 +9,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -36,6 +37,9 @@ import android.widget.Scroller;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.core.view.inputmethod.EditorInfoCompat;
+import androidx.core.view.inputmethod.InputConnectionCompat;
+import androidx.core.view.inputmethod.InputContentInfoCompat;
 
 import com.termux.terminal.KeyHandler;
 import com.termux.terminal.TerminalEmulator;
@@ -322,14 +326,9 @@ public final class TerminalView extends View {
                 // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:packages/inputmethods/LatinIME/java/src/com/android/inputmethod/latin/InputAttributes.java;l=79
                 outAttrs.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
             } else {
-                // Using InputType.NULL is the most correct input type and avoids issues with other hacks.
-                //
-                // Previous keyboard issues:
-                // https://github.com/termux/termux-packages/issues/25
-                // https://github.com/termux/termux-app/issues/87.
-                // https://github.com/termux/termux-app/issues/126.
-                // https://github.com/termux/termux-app/issues/137 (japanese chars and TYPE_NULL).
-                outAttrs.inputType = InputType.TYPE_NULL;
+                // To allow Gboard and other IMEs to show clipboard suggestions (text and screenshots)
+                // while preventing auto-correct from corrupting shell commands:
+                outAttrs.inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
             }
         } else {
             // Corresponds to android:inputType="text"
@@ -340,7 +339,17 @@ public final class TerminalView extends View {
         // keyboard on Android TV (see https://github.com/termux/termux-app/issues/221).
         outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN;
 
-        return new BaseInputConnection(this, true) {
+        // Support rich content (e.g. image clipboard suggestions from Gboard)
+        EditorInfoCompat.setContentMimeTypes(outAttrs, new String[]{
+            "image/png",
+            "image/jpeg",
+            "image/jpg",
+            "image/gif",
+            "image/webp",
+            "image/*"
+        });
+
+        InputConnection baseInputConnection = new BaseInputConnection(this, true) {
 
             @Override
             public boolean finishComposingText() {
@@ -435,6 +444,23 @@ public final class TerminalView extends View {
             }
 
         };
+
+        InputConnectionCompat.OnCommitContentListener commitContentListener = new InputConnectionCompat.OnCommitContentListener() {
+            @Override
+            public boolean onCommitContent(InputContentInfoCompat inputContentInfo, int flags, Bundle opts) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1 && (flags & InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION) != 0) {
+                    try {
+                        inputContentInfo.requestPermission();
+                    } catch (Exception e) {
+                        mClient.logError(LOG_TAG, "Failed to request permission for rich content: " + e.getMessage());
+                        return false;
+                    }
+                }
+                return mClient.onCommitContent(inputContentInfo, flags, opts);
+            }
+        };
+
+        return InputConnectionCompat.createWrapper(baseInputConnection, outAttrs, commitContentListener);
     }
 
     @Override
