@@ -332,33 +332,18 @@ public final class TerminalView extends View {
 
         InputConnection baseInputConnection = new BaseInputConnection(this, true) {
 
-            private int mPreviousComposingTextLength = 0;
-
-            @Override
-            public boolean setComposingText(CharSequence text, int newCursorPosition) {
-                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
-                    mClient.logInfo(LOG_TAG, "IME: setComposingText(\"" + text + "\", " + newCursorPosition + ")");
-                }
-                if (mPreviousComposingTextLength > 0) {
-                    KeyEvent deleteKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL);
-                    for (int i = 0; i < mPreviousComposingTextLength; i++) {
-                        sendKeyEvent(deleteKey);
-                    }
-                }
-                mPreviousComposingTextLength = text != null ? text.length() : 0;
-                if (text != null && text.length() > 0) {
-                    sendTextToTerminal(text);
-                }
-                return super.setComposingText(text, newCursorPosition);
-            }
-
             @Override
             public boolean finishComposingText() {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) mClient.logInfo(LOG_TAG, "IME: finishComposingText()");
-                mPreviousComposingTextLength = 0;
                 super.finishComposingText();
 
-                getEditable().clear();
+                if (mEmulator == null) return true;
+
+                Editable content = getEditable();
+                if (content != null && content.length() > 0) {
+                    sendTextToTerminal(content);
+                    content.clear();
+                }
                 return true;
             }
 
@@ -367,20 +352,15 @@ public final class TerminalView extends View {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: commitText(\"" + text + "\", " + newCursorPosition + ")");
                 }
-                if (mPreviousComposingTextLength > 0) {
-                    KeyEvent deleteKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL);
-                    for (int i = 0; i < mPreviousComposingTextLength; i++) {
-                        sendKeyEvent(deleteKey);
-                    }
-                    mPreviousComposingTextLength = 0;
-                }
                 super.commitText(text, newCursorPosition);
 
                 if (mEmulator == null) return true;
 
                 Editable content = getEditable();
-                sendTextToTerminal(content);
-                content.clear();
+                if (content != null && content.length() > 0) {
+                    sendTextToTerminal(content);
+                    content.clear();
+                }
                 return true;
             }
 
@@ -389,9 +369,12 @@ public final class TerminalView extends View {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: deleteSurroundingText(" + leftLength + ", " + rightLength + ")");
                 }
-                // The stock Samsung keyboard with 'Auto check spelling' enabled sends leftLength > 1.
-                KeyEvent deleteKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL);
-                for (int i = 0; i < leftLength; i++) sendKeyEvent(deleteKey);
+                KeyEvent deleteKeyDown = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL);
+                KeyEvent deleteKeyUp = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL);
+                for (int i = 0; i < leftLength; i++) {
+                    sendKeyEvent(deleteKeyDown);
+                    sendKeyEvent(deleteKeyUp);
+                }
                 return super.deleteSurroundingText(leftLength, rightLength);
             }
 
