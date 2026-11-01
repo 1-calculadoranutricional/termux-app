@@ -311,52 +311,53 @@ public final class TerminalView extends View {
 
     @Override
     public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
-        // Ensure that inputType is only set if TerminalView is selected view with the keyboard and
-        // an alternate view is not selected, like an EditText. This is necessary if an activity is
-        // initially started with the alternate view or if activity is returned to from another app
-        // and the alternate view was the one selected the last time.
-        if (mClient.isTerminalViewSelected()) {
-            if (mClient.shouldEnforceCharBasedInput()) {
-                // Some keyboards seems do not reset the internal state on TYPE_NULL.
-                // Affects mostly Samsung stock keyboards.
-                // https://github.com/termux/termux-app/issues/686
-                // However, this is not a valid value as per AOSP since `InputType.TYPE_CLASS_*` is
-                // not set and it logs a warning:
-                // W/InputAttributes: Unexpected input class: inputType=0x00080090 imeOptions=0x02000000
-                // https://cs.android.com/android/platform/superproject/+/android-11.0.0_r40:packages/inputmethods/LatinIME/java/src/com/android/inputmethod/latin/InputAttributes.java;l=79
-                outAttrs.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
-            } else {
-                // To allow Gboard and other IMEs to show clipboard suggestions (text and screenshots)
-                // while preventing auto-correct from corrupting shell commands:
-                outAttrs.inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS;
-            }
-        } else {
-            // Corresponds to android:inputType="text"
-            outAttrs.inputType =  InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL;
-        }
-
-        // Note that IME_ACTION_NONE cannot be used as that makes it impossible to input newlines using the on-screen
-        // keyboard on Android TV (see https://github.com/termux/termux-app/issues/221).
-        outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN;
+        // WhatsApp-like input configuration so Gboard exposes the full clipboard suggestion strip
+        // (including recent copied text snippets, screenshots and images)
+        outAttrs.inputType = InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES;
+        outAttrs.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
 
         // Support rich content (e.g. image clipboard suggestions from Gboard)
-        EditorInfoCompat.setContentMimeTypes(outAttrs, new String[]{
+        String[] mimeTypes = new String[]{
             "image/png",
             "image/jpeg",
             "image/jpg",
             "image/gif",
             "image/webp",
             "image/*"
-        });
+        };
+        EditorInfoCompat.setContentMimeTypes(outAttrs, mimeTypes);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            outAttrs.contentMimeTypes = mimeTypes;
+        }
 
         InputConnection baseInputConnection = new BaseInputConnection(this, true) {
+
+            private int mPreviousComposingTextLength = 0;
+
+            @Override
+            public boolean setComposingText(CharSequence text, int newCursorPosition) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: setComposingText(\"" + text + "\", " + newCursorPosition + ")");
+                }
+                if (mPreviousComposingTextLength > 0) {
+                    KeyEvent deleteKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL);
+                    for (int i = 0; i < mPreviousComposingTextLength; i++) {
+                        sendKeyEvent(deleteKey);
+                    }
+                }
+                mPreviousComposingTextLength = text != null ? text.length() : 0;
+                if (text != null && text.length() > 0) {
+                    sendTextToTerminal(text);
+                }
+                return super.setComposingText(text, newCursorPosition);
+            }
 
             @Override
             public boolean finishComposingText() {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) mClient.logInfo(LOG_TAG, "IME: finishComposingText()");
+                mPreviousComposingTextLength = 0;
                 super.finishComposingText();
 
-                sendTextToTerminal(getEditable());
                 getEditable().clear();
                 return true;
             }
@@ -365,6 +366,13 @@ public final class TerminalView extends View {
             public boolean commitText(CharSequence text, int newCursorPosition) {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: commitText(\"" + text + "\", " + newCursorPosition + ")");
+                }
+                if (mPreviousComposingTextLength > 0) {
+                    KeyEvent deleteKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL);
+                    for (int i = 0; i < mPreviousComposingTextLength; i++) {
+                        sendKeyEvent(deleteKey);
+                    }
+                    mPreviousComposingTextLength = 0;
                 }
                 super.commitText(text, newCursorPosition);
 

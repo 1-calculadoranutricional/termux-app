@@ -832,6 +832,11 @@ public class TermuxTerminalViewClient extends TermuxTerminalViewClientBase {
                 }
             } catch (Exception e) {
                 Logger.logStackTraceWithMessage(LOG_TAG, "Error handling clipboard content from Gboard", e);
+            } finally {
+                try {
+                    inputContentInfo.releasePermission();
+                } catch (Exception ignored) {
+                }
             }
         }).start();
 
