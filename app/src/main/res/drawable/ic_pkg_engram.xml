@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+  <!-- Central memory node ring -->
+  <path
+      android:fillColor="#A855F7"
+      android:pathData="M24,6c-9.94,0 -18,8.06 -18,18s8.06,18 18,18 18,-8.06 18,-18S33.94,6 24,6zM24,38c-7.73,0 -14,-6.27 -14,-14s6.27,-14 14,-14 14,6.27 14,14 -6.27,14 -14,14z" />
+  <!-- Synaptic core & connections -->
+  <path
+      android:fillColor="#38BDF8"
+      android:pathData="M24,14c-5.52,0 -10,4.48 -10,10s4.48,10 10,10 10,-4.48 10,-10 -4.48,-10 -10,-10zM24,28c-2.21,0 -4,-1.79 -4,-4s1.79,-4 4,-4 4,1.79 4,4 -1.79,4 -4,4z" />
+  <!-- Radiant memory nodes -->
+  <path
+      android:fillColor="#C084FC"
+      android:pathData="M24,2a3,3 0 1,0 0,6 3,3 0 0,0 0,-6zM24,40a3,3 0 1,0 0,6 3,3 0 0,0 0,-6zM4,21a3,3 0 1,0 0,6 3,3 0 0,0 0,-6zM40,21a3,3 0 1,0 0,6 3,3 0 0,0 0,-6z" />
+</vector>

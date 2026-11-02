@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+  <!-- Go logo: G and O styled path in Go cyan -->
+  <path
+      android:fillColor="#00ADD8"
+      android:pathData="M2,24c0,-12.15 9.85,-22 22,-22s22,9.85 22,22 -9.85,22 -22,22S2,36.15 2,24z"
+      android:strokeAlpha="0.12"
+      android:fillAlpha="0.15" />
+  <path
+      android:fillColor="#00ADD8"
+      android:pathData="M8,24c0,-8.84 7.16,-16 16,-16s16,7.16 16,16 -7.16,16 -16,16S8,32.84 8,24z"
+      android:fillAlpha="0.25" />
+  <!-- G letter -->
+  <path
+      android:fillColor="#00ADD8"
+      android:pathData="M21,17h-6c-3.3,0 -6,2.7 -6,6v2c0,3.3 2.7,6 6,6h6v-6h-6v2h4v2h-4c-1.1,0 -2,-0.9 -2,-2v-2c0,-1.1 0.9,-2 2,-2h6v-4z" />
+  <!-- O letter -->
+  <path
+      android:fillColor="#00ADD8"
+      android:pathData="M33,17h-4c-3.3,0 -6,2.7 -6,6v2c0,3.3 2.7,6 6,6h4c3.3,0 6,-2.7 6,-6v-2c0,-3.3 -2.7,-6 -6,-6zM35,25c0,1.1 -0.9,2 -2,2h-4c-1.1,0 -2,-0.9 -2,-2v-2c0,-1.1 0.9,-2 2,-2h4c1.1,0 2,0.9 2,2v2z" />
+  <!-- Speed lines -->
+  <path
+      android:fillColor="#00ADD8"
+      android:pathData="M3,19h4v2H3zM1,23h5v2H1zM4,27h3v2H4z" />
+</vector>

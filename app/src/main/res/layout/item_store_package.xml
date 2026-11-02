@@ -78,6 +78,7 @@
 
     </LinearLayout>
 
+
     <!-- Action Buttons Container (spans full width under icon and details) -->
     <LinearLayout
         android:id="@+id/package_buttons_container"

@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+  <!-- Angular shield left half -->
+  <path
+      android:fillColor="#DD0031"
+      android:pathData="M24,4L5,11l3,25l16,8l16,-8l3,-25L24,4z" />
+  <!-- Angular shield right half highlight -->
+  <path
+      android:fillColor="#C3002F"
+      android:pathData="M24,4v36l16,-8l3,-25L24,4z" />
+  <!-- White A emblem -->
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M24,11L14,33h4.3l2,-5h7.4l2,5H34L24,11zM26.2,24.5h-4.4L24,19.2l2.2,5.3z" />
+</vector>

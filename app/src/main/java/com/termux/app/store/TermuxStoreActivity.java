@@ -1,5 +1,7 @@
 package com.termux.app.store;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -7,7 +9,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -18,6 +24,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import com.termux.R;
 import com.termux.app.TermuxActivity;
@@ -30,6 +38,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TermuxStoreActivity extends AppCompatActivity implements StorePackageAdapter.OnPackageActionListener {
@@ -37,13 +46,14 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     private RecyclerView mRecyclerView;
     private View mEmptyView;
     private StorePackageAdapter mAdapter;
-    private List<StorePackageItem> mPackages;
     private List<StorePackageItem> mAllPackages;
+    private List<StorePackageItem> mShuffledForYouPackages;
     private EditText mSearchInput;
     private ImageView mClearButton;
     private String mCurrentCategoryFilter = null;
 
     private TextView mChipForYou;
+    private TextView mChipGoogle;
     private TextView mChipTopTools;
     private TextView mChipDev;
     private TextView mChipSystem;
@@ -69,8 +79,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         initPackageList();
-        mAllPackages = new ArrayList<>(mPackages);
-        mAdapter = new StorePackageAdapter(mPackages, this);
+        mShuffledForYouPackages = new ArrayList<>(mAllPackages);
+        Collections.shuffle(mShuffledForYouPackages);
+        mAdapter = new StorePackageAdapter(new ArrayList<>(mShuffledForYouPackages), this);
         mRecyclerView.setAdapter(mAdapter);
 
         // Back button inside the Play Store search bar
@@ -92,6 +103,31 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         }
 
         if (mSearchInput != null) {
+            mSearchInput.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE
+                        || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    }
+                    v.clearFocus();
+                    return true;
+                }
+                return false;
+            });
+
+            mSearchInput.setOnKeyListener((v, keyCode, event) -> {
+                if (keyCode == KeyEvent.KEYCODE_ENTER) {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                    }
+                    v.clearFocus();
+                    return true;
+                }
+                return false;
+            });
+
             mSearchInput.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -111,17 +147,22 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
 
         // Category chips
         mChipForYou = findViewById(R.id.chip_for_you);
+        mChipGoogle = findViewById(R.id.chip_google);
         mChipTopTools = findViewById(R.id.chip_top_tools);
         mChipDev = findViewById(R.id.chip_dev);
         mChipSystem = findViewById(R.id.chip_system);
         mChipAiCli = findViewById(R.id.chip_ai_cli);
 
         setupChips();
+        updateChipVisuals();
     }
 
     private void setupChips() {
         if (mChipForYou != null) {
             mChipForYou.setOnClickListener(v -> selectCategoryChip(null));
+        }
+        if (mChipGoogle != null) {
+            mChipGoogle.setOnClickListener(v -> selectCategoryChip("google"));
         }
         if (mChipTopTools != null) {
             mChipTopTools.setOnClickListener(v -> selectCategoryChip("herramientas"));
@@ -139,17 +180,22 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
 
     private void selectCategoryChip(@Nullable String category) {
         mCurrentCategoryFilter = category;
+        if (category == null) {
+            mShuffledForYouPackages = new ArrayList<>(mAllPackages);
+            Collections.shuffle(mShuffledForYouPackages);
+        }
         updateChipVisuals();
         filterPackages(mSearchInput != null ? mSearchInput.getText().toString() : "", mCurrentCategoryFilter);
     }
 
     private void updateChipVisuals() {
-        int selectedBg = R.drawable.bg_store_chip_ripple;
-        int unselectedBg = R.drawable.bg_store_chip_ripple;
-        int selectedText = Color.parseColor("#9AA0A6");
+        int selectedBg = R.drawable.bg_store_chip_selected;
+        int unselectedBg = R.drawable.bg_store_chip_unselected;
+        int selectedText = Color.parseColor("#C2E7FF");
         int unselectedText = Color.parseColor("#9AA0A6");
 
         setChipState(mChipForYou, mCurrentCategoryFilter == null, selectedBg, unselectedBg, selectedText, unselectedText);
+        setChipState(mChipGoogle, "google".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
         setChipState(mChipTopTools, "herramientas".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
         setChipState(mChipDev, "desarrollo".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
         setChipState(mChipSystem, "sistema".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
@@ -166,14 +212,18 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         List<StorePackageItem> filtered = new ArrayList<>();
         String normalizedQuery = query != null ? query.trim().toLowerCase() : "";
 
-        for (StorePackageItem item : mAllPackages) {
+        List<StorePackageItem> sourceList = (categoryFilter == null || categoryFilter.trim().isEmpty())
+            ? mShuffledForYouPackages
+            : mAllPackages;
+
+        for (StorePackageItem item : sourceList) {
             boolean matchesQuery = normalizedQuery.isEmpty() ||
                 item.getTitle().toLowerCase().contains(normalizedQuery) ||
                 item.getDescription().toLowerCase().contains(normalizedQuery) ||
                 item.getCategory().toLowerCase().contains(normalizedQuery);
 
             boolean matchesCategory = categoryFilter == null || categoryFilter.trim().isEmpty() ||
-                item.getCategory().toLowerCase().contains(categoryFilter.toLowerCase());
+                categoryFilter.equalsIgnoreCase(item.getCategoryId());
 
             if (matchesQuery && matchesCategory) {
                 filtered.add(item);
@@ -208,204 +258,104 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     }
 
     private void initPackageList() {
-        mPackages = new ArrayList<>();
+        mAllPackages = new ArrayList<>();
 
-        // 1. Yazi File Manager
-        mPackages.add(new StorePackageItem(
-            "yazi",
-            "Yazi",
-            "Productividad • Terminal File Manager",
-            "Navegador de archivos ultrarrápido escrito en Rust con soporte para vista previa gráfica y asíncrona.",
-            R.drawable.ic_store_yazi,
-            "pkg install yazi -y",
-            "pkg uninstall yazi -y",
-            "pkg install yazi -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/yazi",
+        // ==========================================
+        // 1. CATEGORÍA IA Y CLI ("ia")
+        // Exact order: OpenWiki, CodeGraph, Engram
+        // ==========================================
+
+        // 1.1 OpenWiki CLI
+        mAllPackages.add(new StorePackageItem(
+            "openwiki",
+            "OpenWiki CLI",
+            "ia",
+            "IA y CLI • Wiki & Arquitectura",
+            "Herramienta CLI para generar y consultar documentación de arquitectura, grafos de dependencias y wikis técnicas.",
+            R.drawable.ic_pkg_openwiki,
+            "command -v npm >/dev/null 2>&1 || pkg install -y nodejs-lts\n" +
+            "npm install -g --allow-scripts=node-pty,@github/keytar,better-sqlite3 openwiki",
+            "npm uninstall -g openwiki",
+            "npm install -g --allow-scripts=node-pty,@github/keytar,better-sqlite3 openwiki",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/openwiki:" + TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/openwiki",
             "4.9 ★",
-            "14 MB"
+            "18 MB",
+            "openwiki init -y\nopenwiki explore \"TerminalEmulator\"",
+            "openwiki --help\nopenwiki query --help",
+            "Genera y explora wikis de arquitectura y mapas de dependencias de proyectos técnicos."
         ));
 
-        // 2. Antigravity CLI
-        mPackages.add(new StorePackageItem(
-            "antigravity-cli",
-            "Antigravity CLI",
-            "IA & Herramientas • Asistente de Código",
-            "Agente inteligente para desarrollo de software avanzado, pairing y automatización completa.",
-            R.drawable.ic_store_antigravity,
-            "curl -fsSL https://antigravity.google/cli/install.sh | bash\n" +
-            "echo 'export PATH=\"/data/data/com.termux/files/home/.local/bin:$PATH\"' >> ~/.zshrc && source ~/.zshrc",
-            "rm -rf ~/.gemini/antigravity-cli ~/.local/bin/agy",
-            "curl -fsSL https://antigravity.google/cli/install.sh | bash",
-            "/data/data/com.termux/files/home/.local/bin/agy",
-            "4.9 ★",
-            "22 MB"
-        ));
-
-        // 3. Node.js LTS
-        mPackages.add(new StorePackageItem(
-            "nodejs-lts",
-            "Node.js LTS",
-            "Desarrollo • Javascript Runtime",
-            "Entorno de ejecución para JavaScript en el servidor (Long Term Support) con gestor de paquetes npm.",
+        // 1.2 CodeGraph CLI
+        mAllPackages.add(new StorePackageItem(
+            "codegraph",
+            "CodeGraph CLI",
+            "ia",
+            "IA y CLI • Navegación & Grafos",
+            "Instala y configura CodeGraph CLI para análisis de código y navegación de bases de código con grafos.",
             R.drawable.ic_pkg_code,
-            "pkg install nodejs-lts -y",
-            "pkg uninstall nodejs-lts -y",
-            "pkg install nodejs-lts -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/node",
-            "4.8 ★",
-            "35 MB"
-        ));
-
-        // 4. Python 3
-        mPackages.add(new StorePackageItem(
-            "python",
-            "Python 3",
-            "Desarrollo • Intérprete & pip",
-            "Entorno completo de Python con gestor de paquetes pip para scripts, ciencia de datos y automatización.",
-            R.drawable.ic_pkg_python,
-            "pkg install python -y",
-            "pkg uninstall python -y",
-            "pkg install python -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/python",
-            "4.9 ★",
-            "48 MB"
-        ));
-
-        // 5. Git
-        mPackages.add(new StorePackageItem(
-            "git",
-            "Git",
-            "Desarrollo • Control de Versiones",
-            "Sistema de control de versiones distribuido rápido y escalable para repositorios y código fuente.",
-            R.drawable.ic_pkg_git,
-            "pkg install git -y",
-            "pkg uninstall git -y",
-            "pkg install git -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/git",
-            "4.9 ★",
-            "18 MB"
-        ));
-
-        // 6. Neovim
-        mPackages.add(new StorePackageItem(
-            "neovim",
-            "Neovim",
-            "Desarrollo • Editor de Código",
-            "Editor de texto modal hiperextensible, rápido y configurable con soporte para plugins en Lua.",
-            R.drawable.ic_pkg_code,
-            "pkg install neovim -y",
-            "pkg uninstall neovim -y",
-            "pkg install neovim -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/nvim",
-            "4.9 ★",
-            "12 MB"
-        ));
-
-        // 7. Zsh & Powerlevel10k
-        mPackages.add(new StorePackageItem(
-            "zsh",
-            "Zsh & Powerlevel10k",
-            "Herramientas • Shell Avanzada",
-            "Shell Zsh avanzada con Powerlevel10k, autocompletado y resaltado de sintaxis.",
-            R.drawable.ic_pkg_terminal,
-            "pkg install zsh git curl -y\n" +
-            "rm -rf ~/.zsh ~/.zshrc\n" +
-            "mkdir -p ~/.zsh/plugins ~/.zsh/themes\n" +
-            "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zsh/themes/powerlevel10k\n" +
-            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/plugins/zsh-syntax-highlighting\n" +
-            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/plugins/zsh-autosuggestions\n" +
-            "cat << 'EOF' > ~/.zshrc\n" +
-            "if [[ -r \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
-            "  source \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
-            "fi\n" +
-            "source ~/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme\n" +
-            "[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n" +
-            "source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n" +
-            "source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh\n" +
-            "HISTFILE=~/.zsh_history\n" +
-            "HISTSIZE=10000\n" +
-            "SAVEHIST=10000\n" +
-            "setopt share_history\n" +
-            "setopt hist_ignore_dups\n" +
-            "setopt hist_ignore_all_dups\n" +
-            "setopt hist_expire_dups_first\n" +
-            "setopt hist_ignore_space\n" +
-            "setopt hist_verify\n" +
-            "setopt auto_cd\n" +
+            "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh\n" +
+            "echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.zshrc\n" +
+            "export PATH=\"$HOME/.local/bin:$PATH\"\n" +
+            "mkdir -p \"$HOME/.local/bin\"\n" +
+            "cat << 'EOF' > \"$HOME/.local/bin/codegraph\"\n" +
+            "#!/data/data/com.termux/files/usr/bin/sh\n" +
+            "exec node \\\n" +
+            "  --disable-warning=ExperimentalWarning \\\n" +
+            "  \"$HOME/.codegraph/versions/v1.6.2/lib/dist/bin/codegraph.js\" \"$@\"\n" +
             "EOF\n" +
-            "chsh -s zsh\n" +
-            "exec zsh",
-            "pkg uninstall zsh -y",
-            "pkg install zsh git curl -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/zsh",
+            "chmod +x \"$HOME/.local/bin/codegraph\"",
+            "rm -rf ~/.codegraph ~/.local/bin/codegraph",
+            "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh",
+            "/data/data/com.termux/files/home/.local/bin/codegraph",
             "4.9 ★",
-            "20 MB"
+            "10 MB",
+            "codegraph init -y --no-color\ncodegraph explore --no-color \"<simbolo>\"",
+            "codegraph --help\ncodegraph node --no-color <simbolo>\ncodegraph sync --no-color",
+            "Navega jerarquías de llamadas (callers/callees) y definiciones estructurales en modo no interactivo."
         ));
 
-        // 8. htop
-        mPackages.add(new StorePackageItem(
-            "htop",
-            "htop",
-            "Herramientas • Monitor de Sistema",
-            "Visor interactivo y monitor de procesos en tiempo real con uso de CPU, memoria y árbol de tareas.",
-            R.drawable.ic_pkg_monitor,
-            "pkg install htop -y",
-            "pkg uninstall htop -y",
-            "pkg install htop -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/htop",
-            "4.8 ★",
-            "4 MB"
-        ));
-
-        // 9. Termux Storage Setup
-        mPackages.add(new StorePackageItem(
-            "termux-setup-storage",
-            "Termux Storage",
-            "Sistema • Almacenamiento Compartido",
-            "Configura el acceso al almacenamiento compartido de Android (~/storage/shared, descargas y fotos).",
-            R.drawable.ic_pkg_storage,
-            "termux-setup-storage",
-            null,
-            null,
-            null,
+        // 1.3 Engram
+        mAllPackages.add(new StorePackageItem(
+            "engram",
+            "Engram",
+            "ia",
+            "IA y CLI • Memoria Persistente",
+            "Capa de memoria persistente para agentes y herramientas de IA (Antigravity CLI, Gemini CLI).",
+            R.drawable.ic_pkg_engram,
+            "command -v go >/dev/null 2>&1 || pkg install -y golang\n" +
+            "go install github.com/Gentleman-Programming/engram/v3/cmd/engram@latest\n" +
+            "grep -q 'GOPATH' ~/.zshrc 2>/dev/null || echo 'export GOPATH=$HOME/go' >> ~/.zshrc\n" +
+            "grep -q 'GOPATH/bin' ~/.zshrc 2>/dev/null || echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.zshrc\n" +
+            "export GOPATH=$HOME/go\n" +
+            "export PATH=$PATH:$GOPATH/bin\n" +
+            "[ -f ~/.zshrc ] && source ~/.zshrc 2>/dev/null || true",
+            "rm -f ~/go/bin/engram",
+            "go install github.com/Gentleman-Programming/engram/v3/cmd/engram@latest",
+            TermuxConstants.TERMUX_HOME_DIR_PATH + "/go/bin/engram:" + TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/engram",
             "4.9 ★",
-            "1 MB"
+            "15 MB",
+            "engram setup antigravity-cli\nengram doctor",
+            "engram --help\nengram session list",
+            "Proporciona memoria asociativa y persistente para sesiones de agentes de IA locales."
         ));
 
-        // 10. Backup Termux
-        mPackages.add(new StorePackageItem(
-            "termux-backup",
-            "Termux Backup",
-            "Sistema • Copia de Seguridad",
-            "Crea una copia de seguridad comprimida completa de home y usr en /sdcard/Download/termux/termux-backup.tar.gz.",
-            R.drawable.ic_pkg_backup,
-            "mkdir -p /sdcard/Download/termux && cd /data/data/com.termux/files && tar -zcvf /sdcard/Download/termux/termux-backup.tar.gz home usr",
-            null,
-            null,
-            null,
-            "4.9 ★",
-            "2 MB"
-        ));
+        // ==========================================
+        // 2. CATEGORÍA SISTEMAS ("sistema")
+        // Exact order:
+        // 1. Cambiar repositorio
+        // 2. Actualizar sistema
+        // 3. Termux storage
+        // 4. Termux backup
+        // 5. Termux restore
+        // 6. Test velocidad mirror
+        // 7. Hushlogin
+        // ==========================================
 
-        // 11. Restore Termux Backup
-        mPackages.add(new StorePackageItem(
-            "termux-restore",
-            "Termux Restore",
-            "Sistema • Restaurar Copia",
-            "Restaura la copia de seguridad previa desde /sdcard/Download/termux/termux-backup.tar.gz.",
-            R.drawable.ic_pkg_backup,
-            "cd /data/data/com.termux/files && tar -zxvf /sdcard/Download/termux/termux-backup.tar.gz --recursive-unlink",
-            null,
-            null,
-            null,
-            "4.8 ★",
-            "2 MB"
-        ));
-
-        // 12. Termux Change Repo
-        mPackages.add(new StorePackageItem(
+        // 2.1 Cambiar Repositorio
+        mAllPackages.add(new StorePackageItem(
             "termux-change-repo",
             "Cambiar Repositorio",
+            "sistema",
             "Sistema • Repositorios",
             "Ejecuta termux-change-repo para seleccionar espejos (mirrors) de APT rápidos y recomendados.",
             R.drawable.ic_pkg_terminal,
@@ -414,13 +364,17 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null,
             null,
             "4.9 ★",
-            "1 MB"
+            "1 MB",
+            "termux-change-repo",
+            "pkg help",
+            "Usa las flechas y la tecla Espacio para seleccionar espejos rápidos (ej: Grimler o Albatross)."
         ));
 
-        // 13. System Upgrade
-        mPackages.add(new StorePackageItem(
+        // 2.2 Actualizar Sistema
+        mAllPackages.add(new StorePackageItem(
             "pkg-upgrade-auto",
             "Actualizar Sistema",
+            "sistema",
             "Sistema • Actualización",
             "Actualiza todos los paquetes e instala actualizaciones manteniendo las configuraciones locales de forma automática.",
             R.drawable.ic_pkg_monitor,
@@ -429,14 +383,75 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null,
             null,
             "4.9 ★",
-            "15 MB"
+            "15 MB",
+            "pkg update && pkg upgrade",
+            "pkg --help\napt --help",
+            "Ejecuta periódicamente para mantener librerías base y paquetes del sistema al día."
         ));
 
-        // 14. Server Speed Test
-        mPackages.add(new StorePackageItem(
+        // 2.3 Termux Storage
+        mAllPackages.add(new StorePackageItem(
+            "termux-setup-storage",
+            "Termux Storage",
+            "sistema",
+            "Sistema • Almacenamiento Compartido",
+            "Configura el acceso al almacenamiento compartido de Android (~/storage/shared, descargas y fotos).",
+            R.drawable.ic_pkg_storage,
+            "termux-setup-storage",
+            null,
+            null,
+            null,
+            "4.9 ★",
+            "1 MB",
+            "ls -la ~/storage\ncd ~/storage/shared",
+            "termux-setup-storage",
+            "Concede el permiso de almacenamiento en la ventana emergente de Android para vincular tus descargas y fotos."
+        ));
+
+        // 2.4 Termux Backup
+        mAllPackages.add(new StorePackageItem(
+            "termux-backup",
+            "Termux Backup",
+            "sistema",
+            "Sistema • Copia de Seguridad",
+            "Crea una copia de seguridad comprimida completa de home y usr en /sdcard/Download/termux/termux-backup.tar.gz.",
+            R.drawable.ic_pkg_backup,
+            "mkdir -p /sdcard/Download/termux && cd /data/data/com.termux/files && tar -zcvf /sdcard/Download/termux/termux-backup.tar.gz home usr",
+            null,
+            null,
+            null,
+            "4.9 ★",
+            "2 MB",
+            "ls -lh /sdcard/Download/termux/termux-backup.tar.gz",
+            "tar --help",
+            "Guarda este archivo comprimido en la nube o PC para restaurar tu entorno en cualquier dispositivo."
+        ));
+
+        // 2.5 Termux Restore
+        mAllPackages.add(new StorePackageItem(
+            "termux-restore",
+            "Termux Restore",
+            "sistema",
+            "Sistema • Restaurar Copia",
+            "Restaura la copia de seguridad previa desde /sdcard/Download/termux/termux-backup.tar.gz.",
+            R.drawable.ic_pkg_backup,
+            "cd /data/data/com.termux/files && tar -zxvf /sdcard/Download/termux/termux-backup.tar.gz --recursive-unlink",
+            null,
+            null,
+            null,
+            "4.8 ★",
+            "2 MB",
+            "Reinicia Termux o escribe 'exit' para recargar el entorno restaurado.",
+            "tar --help",
+            "Restaura completamente tus paquetes, scripts y archivos en home y usr."
+        ));
+
+        // 2.6 Test Velocidad Mirrors
+        mAllPackages.add(new StorePackageItem(
             "mirror-speed-test",
             "Test Velocidad Mirrors",
-            "Herramientas • Red & Diagnóstico",
+            "sistema",
+            "Sistema • Test Velocidad Mirrors",
             "Prueba la velocidad de descarga y latencia de los espejos de Termux a nivel mundial (Purdue, FAU, SUSTech, Middlendian, Repository.su).",
             R.drawable.ic_pkg_monitor,
             "for servidor in \\\n" +
@@ -457,28 +472,60 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null,
             null,
             "4.8 ★",
-            "2 MB"
+            "2 MB",
+            "Revisa la velocidad (bytes/sec) y latencia reportadas en la prueba.",
+            "termux-change-repo\nEjecuta 'termux-change-repo' para seleccionar el mirror más veloz.",
+            "Los servidores de tu región o continente te darán las mejores velocidades de instalación."
         ));
 
-        // 15. File Utility
-        mPackages.add(new StorePackageItem(
-            "file",
-            "File",
-            "Herramientas • Utilidad de Archivos",
-            "Determina el tipo de un archivo mediante análisis de cabeceras y pruebas mágicas.",
-            R.drawable.ic_pkg_code,
-            "pkg install file -y",
-            "pkg uninstall file -y",
-            "pkg install file -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/file",
-            "4.8 ★",
-            "3 MB"
+        // 2.7 Hushlogin (Silenciar Bienvenida)
+        mAllPackages.add(new StorePackageItem(
+            "hushlogin",
+            "Hushlogin",
+            "sistema",
+            "Sistema • Silenciar Bienvenida",
+            "Oculta el mensaje de bienvenida y motd al abrir una nueva terminal en Termux (touch ~/.hushlogin).",
+            R.drawable.ic_pkg_terminal,
+            "touch ~/.hushlogin",
+            "rm -f ~/.hushlogin",
+            "touch ~/.hushlogin",
+            TermuxConstants.TERMUX_HOME_DIR_PATH + "/.hushlogin",
+            "4.9 ★",
+            "1 KB",
+            "Abre una nueva pestaña o sesión para ver la terminal limpia.",
+            "Para reactivar el mensaje inicial oficial ejecuta: rm -f ~/.hushlogin",
+            "El archivo ~/.hushlogin desactiva el mensaje motd para sesiones más rápidas y limpias."
         ));
 
-        // 16. GitHub CLI (gh)
-        mPackages.add(new StorePackageItem(
+        // ==========================================
+        // 3. CATEGORÍA DESARROLLO ("desarrollo")
+        // Exact order: git, gh cli, node y npm
+        // ==========================================
+
+        // 3.1 Git
+        mAllPackages.add(new StorePackageItem(
+            "git",
+            "Git",
+            "desarrollo",
+            "Desarrollo • Control de Versiones",
+            "Sistema de control de versiones distribuido rápido y escalable para repositorios y código fuente.",
+            R.drawable.ic_pkg_git,
+            "pkg install git -y",
+            "pkg uninstall git -y",
+            "pkg install git -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/git",
+            "4.9 ★",
+            "18 MB",
+            "git config --global user.name \"Tu Nombre\"\ngit config --global user.email \"tu_correo@example.com\"\ngit init mi-proyecto",
+            "git --help\ngit status\nman git",
+            "Configura tu usuario y correo primero, y usa 'git status' para inspeccionar cambios."
+        ));
+
+        // 3.2 GitHub CLI (gh)
+        mAllPackages.add(new StorePackageItem(
             "gh",
             "GitHub CLI (gh)",
+            "desarrollo",
             "Desarrollo • Herramientas Git",
             "Herramienta oficial de línea de comandos de GitHub para gestionar pull requests, issues y repositorios.",
             R.drawable.ic_pkg_git,
@@ -487,14 +534,37 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "pkg install gh -y",
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/gh",
             "4.9 ★",
-            "25 MB"
+            "25 MB",
+            "gh auth login\ngh repo list",
+            "gh --help\ngh repo --help\ngh pr --help",
+            "Inicia sesión con 'gh auth login' seleccionando GitHub.com y el navegador web o token personal."
         ));
 
-        // 17. NPM Update
-        mPackages.add(new StorePackageItem(
+        // 3.3 Node.js LTS
+        mAllPackages.add(new StorePackageItem(
+            "nodejs-lts",
+            "Node.js LTS",
+            "desarrollo",
+            "Desarrollo • Javascript Runtime",
+            "Entorno de ejecución para JavaScript en el servidor (Long Term Support) con gestor de paquetes npm.",
+            R.drawable.ic_pkg_code,
+            "pkg install nodejs-lts -y",
+            "pkg uninstall nodejs-lts -y",
+            "pkg install nodejs-lts -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/node",
+            "4.8 ★",
+            "35 MB",
+            "node -v\nnode (para abrir la consola interactiva REPL)\nnode script.js",
+            "node --help\nnode -e 'console.log(\"Hola Termux\")'",
+            "Permite ejecutar aplicaciones JavaScript, servidores HTTP locales y scripts asíncronos."
+        ));
+
+        // 3.4 NPM
+        mAllPackages.add(new StorePackageItem(
             "npm-update",
-            "NPM (Actualizar)",
-            "Desarrollo • Node.js",
+            "NPM",
+            "desarrollo",
+            "Desarrollo • Node.js Package Manager",
             "Instala o actualiza Node.js/NPM y ejecuta npm install -g npm para tener la última versión global.",
             R.drawable.ic_pkg_code,
             "pkg install npm -y && npm install -g npm",
@@ -502,32 +572,286 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "pkg install npm -y && npm install -g npm",
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/npm",
             "4.8 ★",
-            "18 MB"
+            "18 MB",
+            "npm -v\nnpm init -y\nnpm install <paquete>",
+            "npm help\nnpm <comando> --help",
+            "Usa 'npm install -g <herramienta>' para instalar herramientas globales en Termux."
         ));
 
-        // 18. CodeGraph CLI
-        mPackages.add(new StorePackageItem(
-            "codegraph",
-            "CodeGraph CLI",
-            "Desarrollo • Análisis de Código",
-            "Instala y configura CodeGraph CLI para análisis de código y navegación de bases de código con grafos.",
-            R.drawable.ic_pkg_code,
-            "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh\n" +
-            "echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.zshrc\n" +
+        // ==========================================
+        // 4. CATEGORÍA TOP HERRAMIENTAS ("herramientas")
+        // Exact order: zsh, yazi, file, iosevka nerd font
+        // ==========================================
+
+        // 4.1 Zsh & Powerlevel10k
+        mAllPackages.add(new StorePackageItem(
+            "zsh",
+            "Zsh & Powerlevel10k",
+            "herramientas",
+            "Herramientas • Shell Avanzada",
+            "Shell Zsh avanzada con Powerlevel10k, autocompletado y resaltado de sintaxis.",
+            R.drawable.ic_pkg_terminal,
+            "pkg install zsh git curl -y\n" +
+            "rm -rf ~/.zsh ~/.zshrc\n" +
+            "mkdir -p ~/.zsh/plugins ~/.zsh/themes\n" +
+            "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zsh/themes/powerlevel10k\n" +
+            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/plugins/zsh-syntax-highlighting\n" +
+            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/plugins/zsh-autosuggestions\n" +
+            "cat << 'EOF' > ~/.zshrc\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Powerlevel10k Instant Prompt\n" +
+            "# Debe permanecer cerca del inicio para optimizar la carga del shell.\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "if [[ -r \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+            "  source \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+            "fi\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Theme & Visual Appearance\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "source ~/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme\n" +
+            "[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Plugins\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n" +
+            "source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# History Settings\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "HISTFILE=~/.zsh_history\n" +
+            "HISTSIZE=10000\n" +
+            "SAVEHIST=10000\n" +
+            "setopt share_history hist_ignore_dups hist_ignore_space hist_verify\n\n" +
+            "# Búsqueda en el historial basada en lo ya escrito (Up/Down)\n" +
+            "autoload -Uz up-line-or-beginning-search down-line-or-beginning-search\n" +
+            "zle -N up-line-or-beginning-search\n" +
+            "zle -N down-line-or-beginning-search\n" +
+            "bindkey '^[[A' up-line-or-beginning-search    # Flecha Arriba\n" +
+            "bindkey '^[OA' up-line-or-beginning-search    # Flecha Arriba (modo aplicación)\n" +
+            "bindkey '^[[B' down-line-or-beginning-search  # Flecha Abajo\n" +
+            "bindkey '^[OB' down-line-or-beginning-search  # Flecha Abajo (modo aplicación)\n\n" +
+            "# Mapeo para Home y End en Zsh\n" +
+            "bindkey '^[[H' beginning-of-line\n" +
+            "bindkey '^[[F' end-of-line\n" +
+            "bindkey '^[[1~' beginning-of-line\n" +
+            "bindkey '^[[4~' end-of-line\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Syntax Highlighting Styles\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "typeset -A ZSH_HIGHLIGHT_STYLES\n" +
+            "ZSH_HIGHLIGHT_STYLES[command]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[alias]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[builtin]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[function]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[hashed-command]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[precommand]='fg=cyan'\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Aliases\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "alias X=\"exit\"\n" +
+            "alias C=\"clear\"\n" +
+            "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
+            "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
+            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Environment & PATH\n" +
+            "# ------------------------------------------------------------------------------\n" +
             "export PATH=\"$HOME/.local/bin:$PATH\"\n" +
-            "mkdir -p \"$HOME/.local/bin\"\n" +
-            "cat << 'EOF' > \"$HOME/.local/bin/codegraph\"\n" +
-            "#!/data/data/com.termux/files/usr/bin/sh\n" +
-            "exec node \\\n" +
-            "  --disable-warning=ExperimentalWarning \\\n" +
-            "  \"$HOME/.codegraph/versions/v1.6.2/lib/dist/bin/codegraph.js\" \"$@\"\n" +
+            "export PATH=$PATH:$GOPATH/bin\n" +
+            "export GOPATH=$HOME/go\n\n" +
+            "# Gemini CLI & OpenWiki Gateway (Port 8085)\n" +
+            "export GEMINI_KEYS=\"${GEMINI_KEYS:-}\"\n" +
+            "export GEMINI_API_KEY=\"${GEMINI_API_KEY:-dummy_key}\"\n" +
+            "export GOOGLE_GEMINI_BASE_URL=\"http://127.0.0.1:8085\"\n" +
+            "export LANGSMITH_GATEWAY=\"http://127.0.0.1:8085\"\n" +
+            "export OPENWIKI_PROVIDER=\"gemini\"\n\n" +
+            "# Antigravity CLI Proxy (Port 8086)\n" +
+            "export CLOUD_CODE_URL=\"http://127.0.0.1:8086\"\n" +
+            "export MODEL_GOOGLE_JARVIS_PROXY=\"http://127.0.0.1:8086\"\n" +
             "EOF\n" +
-            "chmod +x \"$HOME/.local/bin/codegraph\"",
-            "rm -rf ~/.codegraph ~/.local/bin/codegraph",
-            "curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh",
-            "/data/data/com.termux/files/home/.local/bin/codegraph",
+            "chsh -s zsh\n" +
+            "exec zsh",
+            "pkg uninstall zsh -y",
+            "pkg install zsh git curl -y && \\\n" +
+            "grep -q \"beginning-of-line\" ~/.zshrc 2>/dev/null || cat << 'EOF' >> ~/.zshrc\n\n" +
+            "# Mapeo para Home y End en Zsh\n" +
+            "bindkey '^[[H' beginning-of-line\n" +
+            "bindkey '^[[F' end-of-line\n" +
+            "bindkey '^[[1~' beginning-of-line\n" +
+            "bindkey '^[[4~' end-of-line\n" +
+            "EOF",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/zsh",
             "4.9 ★",
-            "10 MB"
+            "20 MB",
+            "exec zsh\np10k configure (para volver a configurar temas y estilo visual)",
+            "p10k --help\nConsulta y edita tus atajos en ~/.zshrc",
+            "Incluye alias rápidos: 'C' para limpiar pantalla, 'X' para salir, flechas para buscar en historial."
+        ));
+
+        // 4.2 Yazi File Manager
+        mAllPackages.add(new StorePackageItem(
+            "yazi",
+            "Yazi",
+            "herramientas",
+            "Herramientas • Terminal File Manager",
+            "Navegador de archivos ultrarrápido escrito en Rust con soporte para vista previa gráfica y asíncrona.",
+            R.drawable.ic_pkg_yazi,
+            "pkg install yazi -y && \\\n" +
+            "mkdir -p ~/.config/yazi && \\\n" +
+            "cat << 'EOF' > ~/.config/yazi/keymap.toml\n" +
+            "[[mgr.prepend_keymap]]\n" +
+            "on   = \"<Esc>\"\n" +
+            "run  = \"close\"\n" +
+            "desc = \"Cancel input\"\n" +
+            "EOF\n" +
+            "grep -q \"File Manager Integration (Yazi)\" ~/.zshrc 2>/dev/null || cat << 'EOF' >> ~/.zshrc\n" +
+            "\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# File Manager Integration (Yazi) & Keybindings\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "function yazi() {\n" +
+            "  local tmp=\"$(mktemp -t \"yazi-cwd.XXXXXX\")\" cwd\n" +
+            "  command yazi \"$@\" --cwd-file=\"$tmp\"\n" +
+            "  IFS= read -r -d '' cwd < \"$tmp\"\n" +
+            "  [ \"$cwd\" != \"$PWD\" ] && [ -d \"$cwd\" ] && builtin cd -- \"$cwd\"\n" +
+            "  command rm -f -- \"$tmp\"\n" +
+            "}\n" +
+            "EOF",
+            "pkg uninstall yazi -y",
+            "pkg install yazi -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/yazi",
+            "4.9 ★",
+            "14 MB",
+            "yazi\nyazi ~/storage/shared (para abrir almacenamiento)",
+            "yazi --help\nPulsa '?' o '~' dentro de Yazi para ver todos los atajos de teclado.",
+            "Navega con flechas o hjkl, pulsa 'q' para salir cambiando de directorio automáticamente."
+        ));
+
+        // 4.3 File
+        mAllPackages.add(new StorePackageItem(
+            "file",
+            "File",
+            "herramientas",
+            "Herramientas • Utilidad de Archivos",
+            "Determina el tipo de un archivo mediante análisis de cabeceras y pruebas mágicas.",
+            R.drawable.ic_pkg_code,
+            "pkg install file -y",
+            "pkg uninstall file -y",
+            "pkg install file -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/file",
+            "4.8 ★",
+            "3 MB",
+            "file ~/.zshrc\nfile /data/data/com.termux/files/usr/bin/bash",
+            "file --help\nman file",
+            "Analiza las firmas mágicas de un archivo para informarte su codificación y tipo binario real."
+        ));
+
+        // 4.4 Iosevka Nerd Font
+        mAllPackages.add(new StorePackageItem(
+            "iosevka-nerd-font",
+            "Iosevka Nerd Font",
+            "herramientas",
+            "Herramientas • Tipografía & Iconos",
+            "Fuente monoespaciada con soporte para glifos Nerd Fonts y ligaduras para la terminal.",
+            R.drawable.ic_pkg_font,
+            "mkdir -p ~/.termux && \\\n" +
+            "curl -L -o ~/.termux/Iosevka.zip https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevka.zip && \\\n" +
+            "unzip -o ~/.termux/Iosevka.zip -d ~/.termux/ && \\\n" +
+            "cp ~/.termux/IosevkaNerdFont-Regular.ttf ~/.termux/font.ttf && \\\n" +
+            "rm ~/.termux/Iosevka.zip && \\\n" +
+            "termux-reload-settings",
+            "rm -f ~/.termux/font.ttf && termux-reload-settings",
+            "mkdir -p ~/.termux && curl -L -o ~/.termux/Iosevka.zip https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Iosevka.zip && unzip -o ~/.termux/Iosevka.zip -d ~/.termux/ && cp ~/.termux/IosevkaNerdFont-Regular.ttf ~/.termux/font.ttf && rm ~/.termux/Iosevka.zip && termux-reload-settings",
+            TermuxConstants.TERMUX_HOME_DIR_PATH + "/.termux/font.ttf",
+            "4.9 ★",
+            "8 MB",
+            "termux-reload-settings (se aplica de inmediato)\nPellizca con dos dedos la pantalla para cambiar el tamaño de la fuente.",
+            "La fuente queda instalada en ~/.termux/font.ttf\nPara restaurar fuente por defecto: rm -f ~/.termux/font.ttf && termux-reload-settings",
+            "Soporta iconos y símbolos de Nerd Fonts para Powerlevel10k, Git, Docker y lenguajes."
+        ));
+
+        // ==========================================
+        // 5. CATEGORÍA GOOGLE ("google")
+        // Exact order: Antigravity CLI, Gemini CLI, Angular CLI, Golang
+        // ==========================================
+
+        // 5.1 Antigravity CLI
+        mAllPackages.add(new StorePackageItem(
+            "antigravity-cli",
+            "Antigravity CLI",
+            "google",
+            "Google • Agente IA Avanzado",
+            "Agente inteligente oficial de Google para desarrollo de software avanzado, pairing y automatización completa.",
+            R.drawable.ic_pkg_antigravity,
+            "curl -fsSL https://antigravity.google/cli/install.sh | bash\n" +
+            "echo 'export PATH=\"/data/data/com.termux/files/home/.local/bin:$PATH\"' >> ~/.zshrc && source ~/.zshrc",
+            "rm -rf ~/.gemini/antigravity-cli ~/.local/bin/agy",
+            "curl -fsSL https://antigravity.google/cli/install.sh | bash",
+            TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/agy:" + TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/agy",
+            "4.9 ★",
+            "22 MB",
+            "agy\nagy --model gemini-3.8-flash-low",
+            "agy --help\nagy doctor",
+            "Asistente autónomo de desarrollo. Puedes usar el proxy local configurado en el puerto 8086."
+        ));
+
+        // 5.2 Gemini CLI
+        mAllPackages.add(new StorePackageItem(
+            "gemini-cli",
+            "Gemini CLI",
+            "google",
+            "Google • Asistente de IA",
+            "Línea de comandos oficial de Google Gemini para interactuar con modelos de IA, generación de código y automatización multimodal.",
+            R.drawable.ic_pkg_gemini,
+            "command -v npm >/dev/null 2>&1 || pkg install -y nodejs-lts\n" +
+            "npm install -g --allow-scripts=node-pty,@github/keytar @google/gemini-cli",
+            "npm uninstall -g @google/gemini-cli",
+            "npm install -g --allow-scripts=node-pty,@github/keytar @google/gemini-cli",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/gemini:" + TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/gemini",
+            "4.9 ★",
+            "24 MB",
+            "gemini\ngemini prompt \"Explica cómo funciona este script\"",
+            "gemini --help\ngemini --version",
+            "Interactúa con los modelos Gemini directamente desde tu terminal en Android."
+        ));
+
+        // 5.3 Angular CLI
+        mAllPackages.add(new StorePackageItem(
+            "angular-cli",
+            "Angular CLI",
+            "google",
+            "Google • Framework Web",
+            "Herramienta oficial de línea de comandos de Google para inicializar, compilar y mantener aplicaciones Angular.",
+            R.drawable.ic_pkg_angular,
+            "command -v npm >/dev/null 2>&1 || pkg install -y nodejs-lts\n" +
+            "npm install -g @angular/cli",
+            "npm uninstall -g @angular/cli",
+            "npm install -g @angular/cli",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/ng:" + TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/ng",
+            "4.8 ★",
+            "28 MB",
+            "ng new mi-app\ncd mi-app && ng serve",
+            "ng help\nng generate --help\nng build --help",
+            "Genera componentes, servicios y compila aplicaciones web escalables con TypeScript."
+        ));
+
+        // 5.4 Golang (Go)
+        mAllPackages.add(new StorePackageItem(
+            "golang",
+            "Golang (Go)",
+            "google",
+            "Google • Lenguaje de Programación",
+            "Lenguaje compilado, concurrente y de alto rendimiento creado por Google para desarrollo de sistemas y microservicios.",
+            R.drawable.ic_pkg_golang,
+            "pkg install -y golang",
+            "pkg uninstall -y golang",
+            "pkg install -y golang",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/go",
+            "4.9 ★",
+            "65 MB",
+            "go version\ngo mod init mi-proyecto\ngo run main.go",
+            "go help\ngo help mod\ngo help build",
+            "El entorno GOPATH está configurado en ~/go/bin para que tus binarios ejecutables funcionen inmediatamente."
         ));
     }
 
@@ -539,22 +863,84 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         } else {
             commandToRun = item.getInstallCommand();
         }
-        executeShellCommandInTerminal(item.getTitle(), commandToRun);
+        executeShellCommandInTerminal(item, item.getTitle(), commandToRun, false);
     }
 
     @Override
     public void onSecondaryActionClick(StorePackageItem item) {
         if (item.getUninstallCommand() != null) {
-            executeShellCommandInTerminal(item.getTitle() + " (Desinstalar)", item.getUninstallCommand());
+            executeShellCommandInTerminal(item, item.getTitle() + " (Desinstalar)", item.getUninstallCommand(), true);
         }
     }
 
-    private void executeShellCommandInTerminal(String title, String shellCommand) {
+    @Override
+    public void onItemClick(StorePackageItem item) {
+        showPackageGuideDialog(item);
+    }
+
+    private void showPackageGuideDialog(StorePackageItem item) {
+        StringBuilder message = new StringBuilder();
+        message.append(item.getDescription()).append("\n\n");
+
+        if (item.getInitGuide() != null && !item.getInitGuide().trim().isEmpty()) {
+            message.append("🚀 Cómo inicializar / empezar:\n")
+                   .append(item.getInitGuide()).append("\n\n");
+        }
+
+        if (item.getHelpGuide() != null && !item.getHelpGuide().trim().isEmpty()) {
+            message.append("❓ Ayuda y documentación:\n")
+                   .append(item.getHelpGuide()).append("\n\n");
+        }
+
+        if (item.getQuickTip() != null && !item.getQuickTip().trim().isEmpty()) {
+            message.append("💡 Tip para principiantes:\n")
+                   .append(item.getQuickTip());
+        }
+
+        boolean isInstalled = false;
+        if (item.getBinaryCheckPath() != null) {
+            for (String path : item.getBinaryCheckPath().split(":")) {
+                if (new File(path).exists()) {
+                    isInstalled = true;
+                    break;
+                }
+            }
+        }
+        final boolean finalIsInstalled = isInstalled;
+
+        String actionButtonLabel = item.getBinaryCheckPath() == null ? "Ejecutar" : (isInstalled ? "Actualizar" : "Instalar");
+
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(item.getTitle())
+            .setIcon(item.getIconResId())
+            .setMessage(message.toString().trim())
+            .setPositiveButton(actionButtonLabel, (dialog, which) -> onActionClick(item, finalIsInstalled))
+            .setNeutralButton("Copiar comandos", (dialog, which) -> {
+                StringBuilder copyText = new StringBuilder();
+                if (item.getInitGuide() != null) {
+                    copyText.append("# Inicializar:\n").append(item.getInitGuide()).append("\n\n");
+                }
+                if (item.getHelpGuide() != null) {
+                    copyText.append("# Ayuda:\n").append(item.getHelpGuide()).append("\n");
+                }
+                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (cm != null) {
+                    cm.setPrimaryClip(ClipData.newPlainText("Termux Comandos", copyText.toString().trim()));
+                    Toast.makeText(this, "Comandos copiados al portapapeles", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .setNegativeButton("Cerrar", null)
+            .show();
+    }
+
+    private void executeShellCommandInTerminal(@NonNull StorePackageItem item, String title, String shellCommand, boolean isUninstall) {
         try {
             File scriptDir = new File(getCacheDir(), "store_scripts");
             if (!scriptDir.exists()) scriptDir.mkdirs();
             String uniqueName = "run_store_action_" + System.currentTimeMillis() + ".sh";
             File scriptFile = new File(scriptDir, uniqueName);
+
+            String postBanner = isUninstall ? "" : buildPostInstallBanner(item);
 
             String scriptContent = "#!/data/data/com.termux/files/usr/bin/bash\n" +
                 "sleep 0.15\n" +
@@ -579,6 +965,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
                 "draw_divider\n" +
                 "if [ $EXIT_CODE -eq 0 ]; then\n" +
                 "  echo -e '\\033[1;32m●\\033[0m \\033[1;33mProceso finalizado con éxito (código 0)\\033[0m'\n" +
+                postBanner +
                 "else\n" +
                 "  echo -e '\\033[1;31m●\\033[0m \\033[1;33mError al ejecutar (código '$EXIT_CODE')\\033[0m'\n" +
                 "fi\n" +
@@ -615,5 +1002,45 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         } catch (IOException e) {
             Toast.makeText(this, "Error preparando script: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private String buildPostInstallBanner(StorePackageItem item) {
+        if (item == null) return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append("  echo ''\n");
+        sb.append("  echo -e '\\033[1;36m════════════════════════════════════════════════════════════════\\033[0m'\n");
+        sb.append("  echo -e '\\033[1;32m✔ ").append(escapeForBashEcho(item.getTitle())).append(" completado con éxito\\033[0m'\n");
+
+        if (item.getInitGuide() != null && !item.getInitGuide().trim().isEmpty()) {
+            sb.append("  echo ''\n");
+            sb.append("  echo -e '\\033[1;33m🚀 CÓMO INICIALIZAR / COMENZAR:\\033[0m'\n");
+            for (String line : item.getInitGuide().split("\n")) {
+                sb.append("  echo -e '  \\033[1;37m").append(escapeForBashEcho(line)).append("\\033[0m'\n");
+            }
+        }
+
+        if (item.getHelpGuide() != null && !item.getHelpGuide().trim().isEmpty()) {
+            sb.append("  echo ''\n");
+            sb.append("  echo -e '\\033[1;34m❓ COMANDOS DE AYUDA Y DOCUMENTACIÓN:\\033[0m'\n");
+            for (String line : item.getHelpGuide().split("\n")) {
+                sb.append("  echo -e '  \\033[1;37m").append(escapeForBashEcho(line)).append("\\033[0m'\n");
+            }
+        }
+
+        if (item.getQuickTip() != null && !item.getQuickTip().trim().isEmpty()) {
+            sb.append("  echo ''\n");
+            sb.append("  echo -e '\\033[1;35m💡 CONSEJO PARA PRINCIPIANTES:\\033[0m'\n");
+            for (String line : item.getQuickTip().split("\n")) {
+                sb.append("  echo -e '  \\033[0;36m").append(escapeForBashEcho(line)).append("\\033[0m'\n");
+            }
+        }
+
+        sb.append("  echo -e '\\033[1;36m════════════════════════════════════════════════════════════════\\033[0m'\n");
+        return sb.toString();
+    }
+
+    private String escapeForBashEcho(String text) {
+        if (text == null) return "";
+        return text.replace("\\", "\\\\").replace("'", "'\\''");
     }
 }

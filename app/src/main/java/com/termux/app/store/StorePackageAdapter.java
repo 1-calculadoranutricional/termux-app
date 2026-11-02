@@ -1,5 +1,9 @@
 package com.termux.app.store;
 
+import android.graphics.Color;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +24,7 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
     public interface OnPackageActionListener {
         void onActionClick(StorePackageItem item, boolean isInstalled);
         void onSecondaryActionClick(StorePackageItem item);
+        void onItemClick(StorePackageItem item);
     }
 
     private final List<StorePackageItem> mItems;
@@ -49,32 +54,32 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
 
         holder.titleView.setText(item.getTitle());
         String ratingText = item.getRating() + " • " + item.getSize();
-        android.text.SpannableString ratingSpannable = new android.text.SpannableString(ratingText);
+        SpannableString ratingSpannable = new SpannableString(ratingText);
         int starIdx = ratingText.indexOf('★');
         if (starIdx >= 0) {
-            ratingSpannable.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#AECBFA")),
-                starIdx, starIdx + 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ratingSpannable.setSpan(new ForegroundColorSpan(Color.parseColor("#AECBFA")),
+                starIdx, starIdx + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         holder.ratingSizeView.setText(ratingSpannable);
         holder.descriptionView.setText(item.getDescription());
         holder.iconView.setImageResource(item.getIconResId());
 
-        if (item.getIconResId() == R.drawable.ic_store_yazi || item.getIconResId() == R.drawable.ic_store_antigravity) {
-            holder.iconView.setPadding(0, 0, 0, 0);
-            holder.iconView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        } else {
-            int pad = (int) (8 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
-            holder.iconView.setPadding(pad, pad, pad, pad);
-            holder.iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        }
+        int pad = (int) (8 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+        holder.iconView.setPadding(pad, pad, pad, pad);
+        holder.iconView.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
         boolean isInstalled = false;
         if (item.getBinaryCheckPath() != null) {
-            isInstalled = new File(item.getBinaryCheckPath()).exists();
+            for (String path : item.getBinaryCheckPath().split(":")) {
+                if (new File(path).exists()) {
+                    isInstalled = true;
+                    break;
+                }
+            }
         }
 
         if (item.getBinaryCheckPath() == null) {
-            // Task/utility action (e.g. Storage, Backup, Restore)
+            // Task/utility action (e.g. Storage, Backup, Restore, Mirrors)
             holder.actionButton.setText("Ejecutar");
             holder.secondaryButton.setVisibility(View.GONE);
         } else if (isInstalled) {
@@ -97,6 +102,12 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
         holder.actionButton.setOnClickListener(v -> {
             if (mListener != null) {
                 mListener.onActionClick(item, finalIsInstalled);
+            }
+        });
+
+        holder.itemView.setOnClickListener(v -> {
+            if (mListener != null) {
+                mListener.onItemClick(item);
             }
         });
     }

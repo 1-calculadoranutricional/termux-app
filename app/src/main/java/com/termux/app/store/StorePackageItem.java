@@ -15,6 +15,7 @@ public class StorePackageItem {
 
     private final String id;
     private final String title;
+    private final String categoryId;
     private final String category;
     private final String description;
     @DrawableRes
@@ -28,9 +29,16 @@ public class StorePackageItem {
     private final String binaryCheckPath;
     private final String rating;
     private final String size;
+    @Nullable
+    private final String initGuide;
+    @Nullable
+    private final String helpGuide;
+    @Nullable
+    private final String quickTip;
 
     public StorePackageItem(@NonNull String id,
                             @NonNull String title,
+                            @NonNull String categoryId,
                             @NonNull String category,
                             @NonNull String description,
                             @DrawableRes int iconResId,
@@ -38,11 +46,12 @@ public class StorePackageItem {
                             @Nullable String uninstallCommand,
                             @Nullable String updateCommand,
                             @Nullable String binaryCheckPath) {
-        this(id, title, category, description, iconResId, installCommand, uninstallCommand, updateCommand, binaryCheckPath, "4.8 ★", "12 MB");
+        this(id, title, categoryId, category, description, iconResId, installCommand, uninstallCommand, updateCommand, binaryCheckPath, "4.8 ★", "12 MB", null, null, null);
     }
 
     public StorePackageItem(@NonNull String id,
                             @NonNull String title,
+                            @NonNull String categoryId,
                             @NonNull String category,
                             @NonNull String description,
                             @DrawableRes int iconResId,
@@ -52,8 +61,27 @@ public class StorePackageItem {
                             @Nullable String binaryCheckPath,
                             @NonNull String rating,
                             @NonNull String size) {
+        this(id, title, categoryId, category, description, iconResId, installCommand, uninstallCommand, updateCommand, binaryCheckPath, rating, size, null, null, null);
+    }
+
+    public StorePackageItem(@NonNull String id,
+                            @NonNull String title,
+                            @NonNull String categoryId,
+                            @NonNull String category,
+                            @NonNull String description,
+                            @DrawableRes int iconResId,
+                            @NonNull String installCommand,
+                            @Nullable String uninstallCommand,
+                            @Nullable String updateCommand,
+                            @Nullable String binaryCheckPath,
+                            @NonNull String rating,
+                            @NonNull String size,
+                            @Nullable String initGuide,
+                            @Nullable String helpGuide,
+                            @Nullable String quickTip) {
         this.id = id;
         this.title = title;
+        this.categoryId = categoryId;
         this.category = category;
         this.description = description;
         this.iconResId = iconResId;
@@ -63,6 +91,9 @@ public class StorePackageItem {
         this.binaryCheckPath = binaryCheckPath;
         this.rating = rating;
         this.size = size;
+        this.initGuide = initGuide;
+        this.helpGuide = helpGuide;
+        this.quickTip = quickTip;
     }
 
     public String getId() {
@@ -71,6 +102,10 @@ public class StorePackageItem {
 
     public String getTitle() {
         return title;
+    }
+
+    public String getCategoryId() {
+        return categoryId;
     }
 
     public String getCategory() {
@@ -110,5 +145,20 @@ public class StorePackageItem {
 
     public String getSize() {
         return size;
+    }
+
+    @Nullable
+    public String getInitGuide() {
+        return initGuide;
+    }
+
+    @Nullable
+    public String getHelpGuide() {
+        return helpGuide;
+    }
+
+    @Nullable
+    public String getQuickTip() {
+        return quickTip;
     }
 }

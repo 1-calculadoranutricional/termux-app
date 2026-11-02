@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+  <!-- Gemini primary star / sparkle -->
+  <path
+      android:fillColor="#8AB4F8"
+      android:pathData="M24,4C24,15.05 15.05,24 4,24C15.05,24 24,32.95 24,44C24,32.95 32.95,24 44,24C32.95,24 24,15.05 24,4Z" />
+  <!-- Gemini accent star -->
+  <path
+      android:fillColor="#4285F4"
+      android:pathData="M38,6C38,9.31 35.31,12 32,12C35.31,12 38,14.69 38,18C38,14.69 40.69,12 44,12C40.69,12 38,9.31 38,6Z" />
+</vector>
