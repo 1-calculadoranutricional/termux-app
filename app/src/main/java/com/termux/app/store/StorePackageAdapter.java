@@ -57,7 +57,7 @@ public class StorePackageAdapter extends RecyclerView.Adapter<StorePackageAdapte
         SpannableString ratingSpannable = new SpannableString(ratingText);
         int starIdx = ratingText.indexOf('★');
         if (starIdx >= 0) {
-            ratingSpannable.setSpan(new ForegroundColorSpan(Color.parseColor("#AECBFA")),
+            ratingSpannable.setSpan(new ForegroundColorSpan(Color.parseColor("#FFFFFF")),
                 starIdx, starIdx + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         holder.ratingSizeView.setText(ratingSpannable);

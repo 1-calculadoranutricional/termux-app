@@ -191,7 +191,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     private void updateChipVisuals() {
         int selectedBg = R.drawable.bg_store_chip_selected;
         int unselectedBg = R.drawable.bg_store_chip_unselected;
-        int selectedText = Color.parseColor("#C2E7FF");
+        int selectedText = Color.parseColor("#000000");
         int unselectedText = Color.parseColor("#9AA0A6");
 
         setChipState(mChipForYou, mCurrentCategoryFilter == null, selectedBg, unselectedBg, selectedText, unselectedText);
@@ -950,12 +950,12 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
 
         String actionButtonLabel = item.getBinaryCheckPath() == null ? "Ejecutar" : (isInstalled ? "Actualizar" : "Instalar");
 
-        new MaterialAlertDialogBuilder(this)
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
             .setTitle(item.getTitle())
             .setIcon(item.getIconResId())
             .setMessage(message.toString().trim())
-            .setPositiveButton(actionButtonLabel, (dialog, which) -> onActionClick(item, finalIsInstalled))
-            .setNeutralButton("Copiar comandos", (dialog, which) -> {
+            .setPositiveButton(actionButtonLabel, (d, which) -> onActionClick(item, finalIsInstalled))
+            .setNeutralButton("Copiar comandos", (d, which) -> {
                 StringBuilder copyText = new StringBuilder();
                 if (item.getInitGuide() != null) {
                     copyText.append("# Inicializar:\n").append(item.getInitGuide()).append("\n\n");
@@ -971,6 +971,16 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             })
             .setNegativeButton("Cerrar", null)
             .show();
+
+        if (dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE) != null) {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).setTextColor(Color.WHITE);
+        }
+        if (dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL) != null) {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL).setTextColor(Color.WHITE);
+        }
+        if (dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE) != null) {
+            dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.parseColor("#9AA0A6"));
+        }
     }
 
     private void executeShellCommandInTerminal(@NonNull StorePackageItem item, String title, String shellCommand, boolean isUninstall) {
