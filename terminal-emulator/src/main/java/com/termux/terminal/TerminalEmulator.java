@@ -210,6 +210,8 @@ public final class TerminalEmulator {
     private static final int DECSET_BIT_LEFTRIGHT_MARGIN_MODE = 1 << 11;
     /** Not really DECSET bit... - http://www.vt100.net/docs/vt510-rm/DECSACE */
     private static final int DECSET_BIT_RECTANGULAR_CHANGEATTRIBUTE = 1 << 12;
+    /** DECSET 12 - att610 cursor blink. */
+    private static final int DECSET_BIT_CURSOR_BLINKING = 1 << 13;
 
 
     private String mTitle;
@@ -471,6 +473,8 @@ public final class TerminalEmulator {
                 return DECSET_BIT_ORIGIN_MODE;
             case 7:
                 return DECSET_BIT_AUTOWRAP;
+            case 12:
+                return DECSET_BIT_CURSOR_BLINKING;
             case 25:
                 return DECSET_BIT_CURSOR_ENABLED;
             case 66:
@@ -653,6 +657,11 @@ public final class TerminalEmulator {
 
     public void setCursorBlinkingEnabled(boolean cursorBlinkingEnabled) {
         this.mCursorBlinkingEnabled = cursorBlinkingEnabled;
+        setDecsetinternalBit(DECSET_BIT_CURSOR_BLINKING, cursorBlinkingEnabled);
+    }
+
+    public boolean isCursorBlinkingEnabled() {
+        return isDecsetInternalBitSet(DECSET_BIT_CURSOR_BLINKING) || mCursorBlinkingEnabled;
     }
 
     public void setCursorBlinkState(boolean cursorBlinkState) {
@@ -1020,6 +1029,18 @@ public final class TerminalEmulator {
                                     // Do nothing.
                                 }
                                 break;
+                            case 'p':
+                                // Request ANSI mode (DECRQM).
+                                int ansiMode = getArg0(0);
+                                int ansiValue;
+                                if (ansiMode == 4) { // Insert/Replace Mode (IRM)
+                                    ansiValue = mInsertMode ? 1 : 2;
+                                } else {
+                                    Logger.logVerbose(mClient, LOG_TAG, "Got DECRQM for unrecognized ANSI mode=" + ansiMode);
+                                    ansiValue = 0; // 0=not recognized
+                                }
+                                mSession.write(String.format(Locale.US, "\033[%d;%d$y", ansiMode, ansiValue));
+                                break;
                             default:
                                 unknownSequence(b);
                         }
@@ -1076,12 +1097,14 @@ public final class TerminalEmulator {
                             if (mode == 47 || mode == 1047 || mode == 1049) {
                                 // This state is carried by mScreen pointer.
                                 value = (mScreen == mAltBuffer) ? 1 : 2;
+                            } else if (mode == 12) {
+                                value = isCursorBlinkingEnabled() ? 1 : 2;
                             } else {
                                 int internalBit = mapDecSetBitToInternalBit(mode);
                                 if (internalBit != -1) {
                                     value = isDecsetInternalBitSet(internalBit) ? 1 : 2; // 1=set, 2=reset.
                                 } else {
-                                    Logger.logError(mClient, LOG_TAG, "Got DECRQM for unrecognized private DEC mode=" + mode);
+                                    Logger.logVerbose(mClient, LOG_TAG, "Got DECRQM for unrecognized private DEC mode=" + mode);
                                     value = 0; // 0=not recognized, 3=permanently set, 4=permanently reset
                                 }
                             }
@@ -1817,7 +1840,11 @@ public final class TerminalEmulator {
             case 7: // Wrap-around bit, not specific action.
             case 8: // Auto-repeat Keys (DECARM). Do not implement.
             case 9: // X10 mouse reporting - outdated. Do not implement.
-            case 12: // Control cursor blinking - ignore.
+            case 12: // Control cursor blinking (att610).
+                mCursorBlinkingEnabled = setting;
+                if (mClient != null)
+                    mClient.onTerminalCursorStateChange(setting);
+                break;
             case 25: // Hide/show cursor - no action needed, renderer will check with shouldCursorBeVisible().
                 if (mClient != null)
                     mClient.onTerminalCursorStateChange(setting);

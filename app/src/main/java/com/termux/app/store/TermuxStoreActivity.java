@@ -161,8 +161,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         if (mChipForYou != null) {
             mChipForYou.setOnClickListener(v -> selectCategoryChip(null));
         }
-        if (mChipGoogle != null) {
-            mChipGoogle.setOnClickListener(v -> selectCategoryChip("google"));
+        if (mChipSystem != null) {
+            mChipSystem.setOnClickListener(v -> selectCategoryChip("sistema"));
         }
         if (mChipTopTools != null) {
             mChipTopTools.setOnClickListener(v -> selectCategoryChip("herramientas"));
@@ -170,8 +170,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         if (mChipDev != null) {
             mChipDev.setOnClickListener(v -> selectCategoryChip("desarrollo"));
         }
-        if (mChipSystem != null) {
-            mChipSystem.setOnClickListener(v -> selectCategoryChip("sistema"));
+        if (mChipGoogle != null) {
+            mChipGoogle.setOnClickListener(v -> selectCategoryChip("google"));
         }
         if (mChipAiCli != null) {
             mChipAiCli.setOnClickListener(v -> selectCategoryChip("ia"));
@@ -195,10 +195,10 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         int unselectedText = Color.parseColor("#9AA0A6");
 
         setChipState(mChipForYou, mCurrentCategoryFilter == null, selectedBg, unselectedBg, selectedText, unselectedText);
-        setChipState(mChipGoogle, "google".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
+        setChipState(mChipSystem, "sistema".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
         setChipState(mChipTopTools, "herramientas".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
         setChipState(mChipDev, "desarrollo".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
-        setChipState(mChipSystem, "sistema".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
+        setChipState(mChipGoogle, "google".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
         setChipState(mChipAiCli, "ia".equalsIgnoreCase(mCurrentCategoryFilter), selectedBg, unselectedBg, selectedText, unselectedText);
     }
 
@@ -259,13 +259,20 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
 
     private void initPackageList() {
         mAllPackages = new ArrayList<>();
+        initSystemPackages();
+        initToolsPackages();
+        initDevPackages();
+        initGooglePackages();
+        initAiCliPackages();
+    }
 
+    private void initAiCliPackages() {
         // ==========================================
-        // 1. CATEGORÍA IA Y CLI ("ia")
+        // CATEGORÍA AI & CLI ("ia")
         // Exact order: OpenWiki, CodeGraph, Engram
         // ==========================================
 
-        // 1.1 OpenWiki CLI
+        // OpenWiki CLI
         mAllPackages.add(new StorePackageItem(
             "openwiki",
             "OpenWiki CLI",
@@ -280,9 +287,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/openwiki:" + TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/openwiki",
             "4.9 ★",
             "18 MB",
-            "openwiki init -y\nopenwiki explore \"TerminalEmulator\"",
-            "openwiki --help\nopenwiki query --help",
-            "Genera y explora wikis de arquitectura y mapas de dependencias de proyectos técnicos."
+            "openwiki",
+            "openwiki --help",
+            null
         ));
 
         // 1.2 CodeGraph CLI
@@ -309,9 +316,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "/data/data/com.termux/files/home/.local/bin/codegraph",
             "4.9 ★",
             "10 MB",
-            "codegraph init -y --no-color\ncodegraph explore --no-color \"<simbolo>\"",
-            "codegraph --help\ncodegraph node --no-color <simbolo>\ncodegraph sync --no-color",
-            "Navega jerarquías de llamadas (callers/callees) y definiciones estructurales en modo no interactivo."
+            "codegraph",
+            "codegraph --help",
+            null
         ));
 
         // 1.3 Engram
@@ -334,13 +341,15 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_HOME_DIR_PATH + "/go/bin/engram:" + TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/engram",
             "4.9 ★",
             "15 MB",
-            "engram setup antigravity-cli\nengram doctor",
-            "engram --help\nengram session list",
-            "Proporciona memoria asociativa y persistente para sesiones de agentes de IA locales."
+            "engram",
+            "engram --help",
+            null
         ));
+    }
 
+    private void initSystemPackages() {
         // ==========================================
-        // 2. CATEGORÍA SISTEMAS ("sistema")
+        // CATEGORÍA SYSTEM ("sistema")
         // Exact order:
         // 1. Cambiar repositorio
         // 2. Actualizar sistema
@@ -351,7 +360,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         // 7. Hushlogin
         // ==========================================
 
-        // 2.1 Cambiar Repositorio
+        // Cambiar Repositorio
         mAllPackages.add(new StorePackageItem(
             "termux-change-repo",
             "Cambiar Repositorio",
@@ -367,7 +376,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "1 MB",
             "termux-change-repo",
             "pkg help",
-            "Usa las flechas y la tecla Espacio para seleccionar espejos rápidos (ej: Grimler o Albatross)."
+            null
         ));
 
         // 2.2 Actualizar Sistema
@@ -384,9 +393,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null,
             "4.9 ★",
             "15 MB",
-            "pkg update && pkg upgrade",
-            "pkg --help\napt --help",
-            "Ejecuta periódicamente para mantener librerías base y paquetes del sistema al día."
+            null,
+            "pkg help",
+            null
         ));
 
         // 2.3 Termux Storage
@@ -403,9 +412,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null,
             "4.9 ★",
             "1 MB",
-            "ls -la ~/storage\ncd ~/storage/shared",
-            "termux-setup-storage",
-            "Concede el permiso de almacenamiento en la ventana emergente de Android para vincular tus descargas y fotos."
+            "cd ~/storage/shared",
+            "ls ~/storage",
+            null
         ));
 
         // 2.4 Termux Backup
@@ -424,7 +433,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "2 MB",
             "ls -lh /sdcard/Download/termux/termux-backup.tar.gz",
             "tar --help",
-            "Guarda este archivo comprimido en la nube o PC para restaurar tu entorno en cualquier dispositivo."
+            null
         ));
 
         // 2.5 Termux Restore
@@ -441,9 +450,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null,
             "4.8 ★",
             "2 MB",
-            "Reinicia Termux o escribe 'exit' para recargar el entorno restaurado.",
+            "exit",
             "tar --help",
-            "Restaura completamente tus paquetes, scripts y archivos en home y usr."
+            null
         ));
 
         // 2.6 Test Velocidad Mirrors
@@ -473,9 +482,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null,
             "4.8 ★",
             "2 MB",
-            "Revisa la velocidad (bytes/sec) y latencia reportadas en la prueba.",
-            "termux-change-repo\nEjecuta 'termux-change-repo' para seleccionar el mirror más veloz.",
-            "Los servidores de tu región o continente te darán las mejores velocidades de instalación."
+            "termux-change-repo",
+            "pkg help",
+            null
         ));
 
         // 2.7 Hushlogin (Silenciar Bienvenida)
@@ -492,17 +501,19 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_HOME_DIR_PATH + "/.hushlogin",
             "4.9 ★",
             "1 KB",
-            "Abre una nueva pestaña o sesión para ver la terminal limpia.",
-            "Para reactivar el mensaje inicial oficial ejecuta: rm -f ~/.hushlogin",
-            "El archivo ~/.hushlogin desactiva el mensaje motd para sesiones más rápidas y limpias."
+            null,
+            "rm -f ~/.hushlogin",
+            null
         ));
+    }
 
+    private void initDevPackages() {
         // ==========================================
-        // 3. CATEGORÍA DESARROLLO ("desarrollo")
+        // CATEGORÍA DEV ("desarrollo")
         // Exact order: git, gh cli, node y npm
         // ==========================================
 
-        // 3.1 Git
+        // Git
         mAllPackages.add(new StorePackageItem(
             "git",
             "Git",
@@ -516,9 +527,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/git",
             "4.9 ★",
             "18 MB",
-            "git config --global user.name \"Tu Nombre\"\ngit config --global user.email \"tu_correo@example.com\"\ngit init mi-proyecto",
-            "git --help\ngit status\nman git",
-            "Configura tu usuario y correo primero, y usa 'git status' para inspeccionar cambios."
+            "git",
+            "git --help",
+            null
         ));
 
         // 3.2 GitHub CLI (gh)
@@ -535,9 +546,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/gh",
             "4.9 ★",
             "25 MB",
-            "gh auth login\ngh repo list",
-            "gh --help\ngh repo --help\ngh pr --help",
-            "Inicia sesión con 'gh auth login' seleccionando GitHub.com y el navegador web o token personal."
+            "gh auth login",
+            "gh --help",
+            null
         ));
 
         // 3.3 Node.js LTS
@@ -554,9 +565,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/node",
             "4.8 ★",
             "35 MB",
-            "node -v\nnode (para abrir la consola interactiva REPL)\nnode script.js",
-            "node --help\nnode -e 'console.log(\"Hola Termux\")'",
-            "Permite ejecutar aplicaciones JavaScript, servidores HTTP locales y scripts asíncronos."
+            "node",
+            "node --help",
+            null
         ));
 
         // 3.4 NPM
@@ -573,17 +584,19 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/npm",
             "4.8 ★",
             "18 MB",
-            "npm -v\nnpm init -y\nnpm install <paquete>",
-            "npm help\nnpm <comando> --help",
-            "Usa 'npm install -g <herramienta>' para instalar herramientas globales en Termux."
+            "npm",
+            "npm --help",
+            null
         ));
+    }
 
+    private void initToolsPackages() {
         // ==========================================
-        // 4. CATEGORÍA TOP HERRAMIENTAS ("herramientas")
+        // CATEGORÍA TOOLS ("herramientas")
         // Exact order: zsh, yazi, file, iosevka nerd font
         // ==========================================
 
-        // 4.1 Zsh & Powerlevel10k
+        // Zsh & Powerlevel10k
         mAllPackages.add(new StorePackageItem(
             "zsh",
             "Zsh & Powerlevel10k",
@@ -650,9 +663,20 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "# ------------------------------------------------------------------------------\n" +
             "alias X=\"exit\"\n" +
             "alias C=\"clear\"\n" +
+            "alias Cd=\"cd\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
-            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n\n" +
+            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# File Manager Integration (Yazi) & Keybindings\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "function yazi() {\n" +
+            "  local tmp=\"$(mktemp -t \"yazi-cwd.XXXXXX\")\" cwd\n" +
+            "  command yazi \"$@\" --cwd-file=\"$tmp\"\n" +
+            "  IFS= read -r -d '' cwd < \"$tmp\"\n" +
+            "  [ \"$cwd\" != \"$PWD\" ] && [ -d \"$cwd\" ] && builtin cd -- \"$cwd\"\n" +
+            "  command rm -f -- \"$tmp\"\n" +
+            "}\n\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# Environment & PATH\n" +
             "# ------------------------------------------------------------------------------\n" +
@@ -679,13 +703,27 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "bindkey '^[[F' end-of-line\n" +
             "bindkey '^[[1~' beginning-of-line\n" +
             "bindkey '^[[4~' end-of-line\n" +
+            "EOF\n" +
+            "grep -q 'alias Cd=' ~/.zshrc 2>/dev/null || echo 'alias Cd=\"cd\"' >> ~/.zshrc\n" +
+            "grep -q \"File Manager Integration (Yazi)\" ~/.zshrc 2>/dev/null || cat << 'EOF' >> ~/.zshrc\n" +
+            "\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# File Manager Integration (Yazi) & Keybindings\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "function yazi() {\n" +
+            "  local tmp=\"$(mktemp -t \"yazi-cwd.XXXXXX\")\" cwd\n" +
+            "  command yazi \"$@\" --cwd-file=\"$tmp\"\n" +
+            "  IFS= read -r -d '' cwd < \"$tmp\"\n" +
+            "  [ \"$cwd\" != \"$PWD\" ] && [ -d \"$cwd\" ] && builtin cd -- \"$cwd\"\n" +
+            "  command rm -f -- \"$tmp\"\n" +
+            "}\n" +
             "EOF",
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/zsh",
             "4.9 ★",
             "20 MB",
-            "exec zsh\np10k configure (para volver a configurar temas y estilo visual)",
-            "p10k --help\nConsulta y edita tus atajos en ~/.zshrc",
-            "Incluye alias rápidos: 'C' para limpiar pantalla, 'X' para salir, flechas para buscar en historial."
+            "zsh",
+            "p10k configure",
+            null
         ));
 
         // 4.2 Yazi File Manager
@@ -722,9 +760,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/yazi",
             "4.9 ★",
             "14 MB",
-            "yazi\nyazi ~/storage/shared (para abrir almacenamiento)",
-            "yazi --help\nPulsa '?' o '~' dentro de Yazi para ver todos los atajos de teclado.",
-            "Navega con flechas o hjkl, pulsa 'q' para salir cambiando de directorio automáticamente."
+            "yazi",
+            "yazi --help",
+            null
         ));
 
         // 4.3 File
@@ -741,9 +779,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/file",
             "4.8 ★",
             "3 MB",
-            "file ~/.zshrc\nfile /data/data/com.termux/files/usr/bin/bash",
-            "file --help\nman file",
-            "Analiza las firmas mágicas de un archivo para informarte su codificación y tipo binario real."
+            "file <archivo>",
+            "file --help",
+            null
         ));
 
         // 4.4 Iosevka Nerd Font
@@ -765,17 +803,19 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_HOME_DIR_PATH + "/.termux/font.ttf",
             "4.9 ★",
             "8 MB",
-            "termux-reload-settings (se aplica de inmediato)\nPellizca con dos dedos la pantalla para cambiar el tamaño de la fuente.",
-            "La fuente queda instalada en ~/.termux/font.ttf\nPara restaurar fuente por defecto: rm -f ~/.termux/font.ttf && termux-reload-settings",
-            "Soporta iconos y símbolos de Nerd Fonts para Powerlevel10k, Git, Docker y lenguajes."
+            "termux-reload-settings",
+            "rm -f ~/.termux/font.ttf && termux-reload-settings",
+            null
         ));
+    }
 
+    private void initGooglePackages() {
         // ==========================================
-        // 5. CATEGORÍA GOOGLE ("google")
+        // CATEGORÍA GOOGLE ("google")
         // Exact order: Antigravity CLI, Gemini CLI, Angular CLI, Golang
         // ==========================================
 
-        // 5.1 Antigravity CLI
+        // Antigravity CLI
         mAllPackages.add(new StorePackageItem(
             "antigravity-cli",
             "Antigravity CLI",
@@ -790,9 +830,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/agy:" + TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/agy",
             "4.9 ★",
             "22 MB",
-            "agy\nagy --model gemini-3.8-flash-low",
-            "agy --help\nagy doctor",
-            "Asistente autónomo de desarrollo. Puedes usar el proxy local configurado en el puerto 8086."
+            "agy",
+            "agy --help",
+            null
         ));
 
         // 5.2 Gemini CLI
@@ -810,9 +850,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/gemini:" + TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/gemini",
             "4.9 ★",
             "24 MB",
-            "gemini\ngemini prompt \"Explica cómo funciona este script\"",
-            "gemini --help\ngemini --version",
-            "Interactúa con los modelos Gemini directamente desde tu terminal en Android."
+            "gemini",
+            "gemini --help",
+            null
         ));
 
         // 5.3 Angular CLI
@@ -830,9 +870,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/ng:" + TermuxConstants.TERMUX_HOME_DIR_PATH + "/.local/bin/ng",
             "4.8 ★",
             "28 MB",
-            "ng new mi-app\ncd mi-app && ng serve",
-            "ng help\nng generate --help\nng build --help",
-            "Genera componentes, servicios y compila aplicaciones web escalables con TypeScript."
+            "ng",
+            "ng --help",
+            null
         ));
 
         // 5.4 Golang (Go)
@@ -849,9 +889,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/go",
             "4.9 ★",
             "65 MB",
-            "go version\ngo mod init mi-proyecto\ngo run main.go",
-            "go help\ngo help mod\ngo help build",
-            "El entorno GOPATH está configurado en ~/go/bin para que tus binarios ejecutables funcionen inmediatamente."
+            "go",
+            "go help",
+            null
         ));
     }
 
@@ -883,17 +923,17 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         message.append(item.getDescription()).append("\n\n");
 
         if (item.getInitGuide() != null && !item.getInitGuide().trim().isEmpty()) {
-            message.append("🚀 Cómo inicializar / empezar:\n")
+            message.append("Cómo inicializar / empezar:\n")
                    .append(item.getInitGuide()).append("\n\n");
         }
 
         if (item.getHelpGuide() != null && !item.getHelpGuide().trim().isEmpty()) {
-            message.append("❓ Ayuda y documentación:\n")
+            message.append("Ayuda y documentación:\n")
                    .append(item.getHelpGuide()).append("\n\n");
         }
 
         if (item.getQuickTip() != null && !item.getQuickTip().trim().isEmpty()) {
-            message.append("💡 Tip para principiantes:\n")
+            message.append("Tip para principiantes:\n")
                    .append(item.getQuickTip());
         }
 
@@ -970,8 +1010,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
                 "  echo -e '\\033[1;31m●\\033[0m \\033[1;33mError al ejecutar (código '$EXIT_CODE')\\033[0m'\n" +
                 "fi\n" +
                 "echo ''\n" +
-                "echo -e '\\033[1;37mSesión activa para auditar y depurar\\033[0m'\n" +
-                "echo -e '\\033[1;37mEscribe \\033[1;34mexit\\033[0;1;37m cuando desees cerrar esta sesión manualmente\\033[0m'\n" +
+                "echo 'Sesión activa para auditar y depurar'\n" +
+                "echo 'Escribe exit cuando desees cerrar esta sesión manualmente'\n" +
                 "echo ''\n" +
                 "if [ -n \"$SHELL\" ] && [ -x \"$SHELL\" ]; then\n" +
                 "  exec \"$SHELL\"\n" +
@@ -1008,34 +1048,24 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         if (item == null) return "";
         StringBuilder sb = new StringBuilder();
         sb.append("  echo ''\n");
-        sb.append("  echo -e '\\033[1;36m════════════════════════════════════════════════════════════════\\033[0m'\n");
-        sb.append("  echo -e '\\033[1;32m✔ ").append(escapeForBashEcho(item.getTitle())).append(" completado con éxito\\033[0m'\n");
+        sb.append("  echo '").append(escapeForBashEcho(item.getTitle())).append(" completado con éxito'\n");
 
         if (item.getInitGuide() != null && !item.getInitGuide().trim().isEmpty()) {
             sb.append("  echo ''\n");
-            sb.append("  echo -e '\\033[1;33m🚀 CÓMO INICIALIZAR / COMENZAR:\\033[0m'\n");
+            sb.append("  echo 'CÓMO INICIALIZAR / COMENZAR:'\n");
             for (String line : item.getInitGuide().split("\n")) {
-                sb.append("  echo -e '  \\033[1;37m").append(escapeForBashEcho(line)).append("\\033[0m'\n");
+                sb.append("  echo '  ").append(escapeForBashEcho(line)).append("'\n");
             }
         }
 
         if (item.getHelpGuide() != null && !item.getHelpGuide().trim().isEmpty()) {
             sb.append("  echo ''\n");
-            sb.append("  echo -e '\\033[1;34m❓ COMANDOS DE AYUDA Y DOCUMENTACIÓN:\\033[0m'\n");
+            sb.append("  echo 'COMANDOS DE AYUDA Y DOCUMENTACIÓN:'\n");
             for (String line : item.getHelpGuide().split("\n")) {
-                sb.append("  echo -e '  \\033[1;37m").append(escapeForBashEcho(line)).append("\\033[0m'\n");
+                sb.append("  echo '  ").append(escapeForBashEcho(line)).append("'\n");
             }
         }
 
-        if (item.getQuickTip() != null && !item.getQuickTip().trim().isEmpty()) {
-            sb.append("  echo ''\n");
-            sb.append("  echo -e '\\033[1;35m💡 CONSEJO PARA PRINCIPIANTES:\\033[0m'\n");
-            for (String line : item.getQuickTip().split("\n")) {
-                sb.append("  echo -e '  \\033[0;36m").append(escapeForBashEcho(line)).append("\\033[0m'\n");
-            }
-        }
-
-        sb.append("  echo -e '\\033[1;36m════════════════════════════════════════════════════════════════\\033[0m'\n");
         return sb.toString();
     }
 

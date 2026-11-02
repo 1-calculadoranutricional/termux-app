@@ -79,7 +79,52 @@
                 android:layout_height="38dp"
                 android:gravity="center"
                 android:background="@drawable/bg_store_chip_unselected"
-                android:text="Para ti"
+                android:text="All"
+                android:textColor="#9AA0A6"
+                android:textSize="13sp"
+                android:paddingHorizontal="14dp"
+                android:layout_marginEnd="8dp"
+                android:clickable="true"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
+
+            <TextView
+                android:id="@+id/chip_system"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:gravity="center"
+                android:background="@drawable/bg_store_chip_unselected"
+                android:text="System"
+                android:textColor="#9AA0A6"
+                android:textSize="13sp"
+                android:paddingHorizontal="14dp"
+                android:layout_marginEnd="8dp"
+                android:clickable="true"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
+
+            <TextView
+                android:id="@+id/chip_top_tools"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:gravity="center"
+                android:background="@drawable/bg_store_chip_unselected"
+                android:text="Tools"
+                android:textColor="#9AA0A6"
+                android:textSize="13sp"
+                android:paddingHorizontal="14dp"
+                android:layout_marginEnd="8dp"
+                android:clickable="true"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
+
+            <TextView
+                android:id="@+id/chip_dev"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:gravity="center"
+                android:background="@drawable/bg_store_chip_unselected"
+                android:text="Dev"
                 android:textColor="#9AA0A6"
                 android:textSize="13sp"
                 android:paddingHorizontal="14dp"
@@ -104,57 +149,12 @@
                 android:focusableInTouchMode="false" />
 
             <TextView
-                android:id="@+id/chip_top_tools"
-                android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:gravity="center"
-                android:background="@drawable/bg_store_chip_unselected"
-                android:text="Top herramientas"
-                android:textColor="#9AA0A6"
-                android:textSize="13sp"
-                android:paddingHorizontal="14dp"
-                android:layout_marginEnd="8dp"
-                android:clickable="true"
-                android:focusable="false"
-                android:focusableInTouchMode="false" />
-
-            <TextView
-                android:id="@+id/chip_dev"
-                android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:gravity="center"
-                android:background="@drawable/bg_store_chip_unselected"
-                android:text="Desarrollo"
-                android:textColor="#9AA0A6"
-                android:textSize="13sp"
-                android:paddingHorizontal="14dp"
-                android:layout_marginEnd="8dp"
-                android:clickable="true"
-                android:focusable="false"
-                android:focusableInTouchMode="false" />
-
-            <TextView
-                android:id="@+id/chip_system"
-                android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:gravity="center"
-                android:background="@drawable/bg_store_chip_unselected"
-                android:text="Sistema"
-                android:textColor="#9AA0A6"
-                android:textSize="13sp"
-                android:paddingHorizontal="14dp"
-                android:layout_marginEnd="8dp"
-                android:clickable="true"
-                android:focusable="false"
-                android:focusableInTouchMode="false" />
-
-            <TextView
                 android:id="@+id/chip_ai_cli"
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
                 android:gravity="center"
                 android:background="@drawable/bg_store_chip_unselected"
-                android:text="IA y CLI"
+                android:text="Ai &amp; cli"
                 android:textColor="#9AA0A6"
                 android:textSize="13sp"
                 android:paddingHorizontal="14dp"

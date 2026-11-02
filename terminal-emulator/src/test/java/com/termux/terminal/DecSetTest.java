@@ -75,4 +75,30 @@ public class DecSetTest extends TerminalTestCase {
 		enterString("\033[?7hhij").assertLinesAre("abh", "ij ", "   ");
 	}
 
+	/** DECRQM - DEC Request Mode. */
+	public void testDecrqm() {
+		withTerminalSized(3, 3);
+		// Mode 12 (cursor blink) initially reset:
+		enterString("\033[?12$p");
+		assertEquals("\033[?12;2$y", mOutput.getOutputAndClear());
+
+		// Enable cursor blink:
+		enterString("\033[?12h");
+		enterString("\033[?12$p");
+		assertEquals("\033[?12;1$y", mOutput.getOutputAndClear());
+
+		// Disable cursor blink:
+		enterString("\033[?12l");
+		enterString("\033[?12$p");
+		assertEquals("\033[?12;2$y", mOutput.getOutputAndClear());
+
+		// Unrecognized mode 5522 returns 0 (not recognized):
+		enterString("\033[?5522$p");
+		assertEquals("\033[?5522;0$y", mOutput.getOutputAndClear());
+
+		// ANSI DECRQM for IRM mode 4:
+		enterString("\033[4$p");
+		assertEquals("\033[4;2$y", mOutput.getOutputAndClear());
+	}
+
 }
