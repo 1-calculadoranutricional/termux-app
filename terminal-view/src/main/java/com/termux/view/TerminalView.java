@@ -31,6 +31,7 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.view.inputmethod.BaseInputConnection;
+import android.view.inputmethod.CorrectionInfo;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.widget.Scroller;
@@ -332,6 +333,32 @@ public final class TerminalView extends View {
 
         InputConnection baseInputConnection = new BaseInputConnection(this, true) {
 
+            private int mComposingRegionLength = 0;
+
+            private void sendBackspace(int count) {
+                if (mTermSession == null || count <= 0) return;
+                TerminalEmulator term = mTermSession.getEmulator();
+                String code = KeyHandler.getCode(KeyEvent.KEYCODE_DEL, 0,
+                    term != null && term.isCursorKeysApplicationMode(),
+                    term != null && term.isKeypadApplicationMode());
+                if (code == null) code = "\u007F";
+                for (int i = 0; i < count; i++) {
+                    mTermSession.write(code);
+                }
+            }
+
+            private void sendDeleteForward(int count) {
+                if (mTermSession == null || count <= 0) return;
+                TerminalEmulator term = mTermSession.getEmulator();
+                String code = KeyHandler.getCode(KeyEvent.KEYCODE_FORWARD_DEL, 0,
+                    term != null && term.isCursorKeysApplicationMode(),
+                    term != null && term.isKeypadApplicationMode());
+                if (code == null) code = "\033[3~";
+                for (int i = 0; i < count; i++) {
+                    mTermSession.write(code);
+                }
+            }
+
             @Override
             public boolean sendKeyEvent(KeyEvent event) {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
@@ -371,9 +398,22 @@ public final class TerminalView extends View {
             }
 
             @Override
+            public boolean setComposingRegion(int start, int end) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: setComposingRegion(" + start + ", " + end + ")");
+                }
+                mComposingRegionLength = Math.max(0, Math.abs(end - start));
+                return super.setComposingRegion(start, end);
+            }
+
+            @Override
             public boolean commitText(CharSequence text, int newCursorPosition) {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: commitText(\"" + text + "\", " + newCursorPosition + ")");
+                }
+                if (mComposingRegionLength > 0) {
+                    sendBackspace(mComposingRegionLength);
+                    mComposingRegionLength = 0;
                 }
                 if (mTermSession != null && !mTermSession.isRunning()) {
                     if (text != null) {
@@ -403,6 +443,10 @@ public final class TerminalView extends View {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: setComposingText(\"" + text + "\", " + newCursorPosition + ")");
                 }
+                if (mComposingRegionLength > 0) {
+                    sendBackspace(mComposingRegionLength);
+                    mComposingRegionLength = 0;
+                }
                 if (mTermSession != null && !mTermSession.isRunning()) {
                     if (text != null) {
                         for (int i = 0; i < text.length(); i++) {
@@ -418,17 +462,40 @@ public final class TerminalView extends View {
             }
 
             @Override
+            public boolean commitCorrection(CorrectionInfo correctionInfo) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: commitCorrection(" + correctionInfo + ")");
+                }
+                if (correctionInfo != null) {
+                    CharSequence oldText = correctionInfo.getOldText();
+                    CharSequence newText = correctionInfo.getNewText();
+                    if (oldText != null && newText != null) {
+                        sendBackspace(oldText.length());
+                        sendTextToTerminal(newText);
+                        return true;
+                    }
+                }
+                return super.commitCorrection(correctionInfo);
+            }
+
+            @Override
             public boolean deleteSurroundingText(int leftLength, int rightLength) {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: deleteSurroundingText(" + leftLength + ", " + rightLength + ")");
                 }
-                KeyEvent deleteKeyDown = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL);
-                KeyEvent deleteKeyUp = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL);
-                for (int i = 0; i < leftLength; i++) {
-                    sendKeyEvent(deleteKeyDown);
-                    sendKeyEvent(deleteKeyUp);
-                }
+                sendBackspace(leftLength);
+                sendDeleteForward(rightLength);
                 return super.deleteSurroundingText(leftLength, rightLength);
+            }
+
+            @Override
+            public boolean deleteSurroundingTextInCodePoints(int beforeLength, int afterLength) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: deleteSurroundingTextInCodePoints(" + beforeLength + ", " + afterLength + ")");
+                }
+                sendBackspace(beforeLength);
+                sendDeleteForward(afterLength);
+                return super.deleteSurroundingTextInCodePoints(beforeLength, afterLength);
             }
 
             @Override
