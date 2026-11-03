@@ -1,27 +1,28 @@
-# Corrección de Autocorrector de Gboard en Termux sin Duplicación
+# Soporte de Bracketed Paste para el Portapapeles de Gboard en Termux
 
-Resolver el conflicto del autocorrector de Gboard al escribir desde el teclado táctil y presionar la barra espaciadora en Termux, eliminando la duplicación de palabras (ej. `"HlaHola Hola"`) mediante la sincronización del búfer de la palabra en `InputConnection` y la emisión precisa de caracteres de retroceso (`Backspace`) para reemplazar limpiamente la palabra antes de insertar la corrección.
+Resolver la ejecución automática y la corrupción de comandos multilínea al pegar bloques de texto desde el portapapeles de Gboard en Termux, canalizando el pegado con saltos de línea a través del mecanismo de *Bracketed Paste Mode* (`mEmulator.paste()`) e insertando texto de una sola línea como texto plano sin forzar la ejecución.
 
 ### Decisiones Críticas y Preferencias Confirmadas
 
 > [!IMPORTANT]
 > **Decisiones confirmadas por el usuario:**
-> - **Comportamiento del autocorrector al pulsar espacio**: Reemplazar automáticamente la palabra mal escrita por la corrección sugerida por el teclado.
-> - **Gestión de borrado**: Sincronizar el búfer de la palabra activa en `InputConnection` para borrar la palabra anterior enviando los códigos de retroceso (`\u007F`) exactos a la sesión de terminal antes de emitir el texto corregido.
-> - **Preservación de funcionalidades previas**: Mantener intacto el soporte de pegado de imágenes/capturas desde el portapapeles de Gboard, el pegado de texto y el dictado por voz (micrófono).
+> - **Pegado de comandos y texto multilínea**: Usar *Bracketed Paste Mode* (`\033[200~ ... \033[201~` mediante `mEmulator.paste()`) para evitar la ejecución automática inmediata de cada línea y evitar la repetición del prompt secundario (`cmdand>`).
+> - **Texto de una sola línea**: Insertarse como texto plano en la posición actual del cursor sin enviar retorno de carro (`\r`), permitiendo al usuario revisar o completar el comando antes de presionar Enter manualmente.
+> - **Preservación de funcionalidades**: Mantener intacto el pegado de imágenes/capturas de pantalla, la autocorrección sin duplicación en la barra espaciadora y el dictado por voz (micrófono).
 
 ---
 
 ### 1. Visión General y Concepto Central
 
-- **Problema actual**: Con la configuración de `EditorInfo.inputType` enriquecida (`TYPE_CLASS_TEXT`), Gboard expone la barra completa de portapapeles, capturas de pantalla, micrófono y sugerencias de texto. Sin embargo, al escribir con el teclado e incurrir en una corrección al pulsar espacio:
-  1. `commitCorrection(CorrectionInfo)` interceptaba la sugerencia e insertaba el texto nuevo sin coordinar con el evento posterior del IME.
-  2. El método `commitText` de `TerminalView` borraba inmediatamente su `Editable` (`content.clear()`), provocando que `getTextBeforeCursor()` devolviera una cadena vacía.
-  3. Gboard perdía la noción del texto presente antes del cursor e inyectaba la corrección y el espacio como texto adicional, generando cadenas anómalas como `"HlaHola Hola"`.
+- **Causa raíz del error**:
+  1. Al presionar "Paste" en el menú contextual de Termux (mantener pulsada la pantalla), Termux invoca `mEmulator.paste(text)`, el cual activa el protocolo terminal estándar de *Bracketed Paste* (`\033[200~` y `\033[201~`). La shell (bash, zsh, fish) reconoce el bloque como texto pegado: no ejecuta los saltos de línea y no duplica los prompts.
+  2. En cambio, al pulsar un chip de texto en el portapapeles de Gboard, el teclado envía todo el contenido a través de `InputConnection.commitText(text, 1)`.
+  3. Previamente, `commitText` iteraba carácter por carácter en `sendTextToTerminal`, traduciendo cada salto de línea `\n` en un retorno de carro `\r` (tecla Enter). Esto provocaba que la shell interpretara cada línea como un comando individual ejecutado inmediatamente con máxima velocidad, rompiendo la estructura de comandos encadenados con `&& \` y generando prompts secundarios anidados (`cmdand> cmdand>`).
+
 - **Solución propuesta**:
-  1. Mantener un búfer sincronizado de la línea o palabra activa (`mCurrentWordBuffer`) dentro del `InputConnection` que responda adecuadamente a `getTextBeforeCursor` y `getSelectedText`.
-  2. Desacoplar la inyección duplicada en `commitCorrection`: tratar `commitCorrection` de forma estándar o sincronizada para que no compita con `commitText` o `setComposingText`.
-  3. Al recibir una sustitución de palabra o región en composición (autocorrección por espacio o sugerencia), calcular la longitud real de la palabra mal escrita, enviar exactamente esa cantidad de retrocesos (`sendBackspace(n)`) a la terminal PTY e insertar la palabra corregida junto al espacio.
+  1. En `TerminalView.java` (`InputConnection.commitText`): detectar cuando el texto recibido contiene saltos de línea (`\n` o `\r`) o proviene de un bloque de portapapeles.
+  2. Para textos multilínea, canalizar la inserción directamente mediante `mEmulator.paste(text.toString())`, igual que lo hace el menú contextual "Paste".
+  3. Para textos de una sola línea sin saltos de línea, insertarlos en el terminal como texto plano en el cursor sin presionar Enter, actualizando el búfer local.
 
 ---
 
@@ -29,32 +30,33 @@ Resolver el conflicto del autocorrector de Gboard al escribir desde el teclado t
 
 ```
   ┌──────────────────────────────────────────────────────────────┐
-  │ 1. Usuario escribe "Hla" en el teclado táctil                │
-  │    - Se muestra "Hla" en la línea de comandos de Termux      │
-  │    - El búfer interno registra "Hla" como palabra activa     │
-  │    - Gboard resalta la sugerencia "Hola" en la barra         │
+  │ 1. Usuario copia bloque multilínea:                          │
+  │    mkdir -p ~/.termux && \                                   │
+  │    curl -L -o ...                                            │
   └──────────────────────────────┬───────────────────────────────┘
                                  │
                                  ▼
   ┌──────────────────────────────────────────────────────────────┐
-  │ 2. Usuario presiona la barra "Espacio"                       │
-  │    - Gboard activa la autocorrección automática              │
+  │ 2. Usuario toca el chip de texto en el portapapeles de Gboard│
   └──────────────────────────────┬───────────────────────────────┘
                                  │
                                  ▼
   ┌──────────────────────────────────────────────────────────────┐
-  │ 3. TerminalView sincroniza la sustitución:                   │
-  │    - Identifica la palabra previa ("Hla", longitud = 3)      │
-  │    - Emite 3 códigos de retroceso \u007F al PTY de Termux    │
-  │    - Emite la palabra corregida "Hola " a la terminal        │
-  │    - Actualiza el búfer interno a "Hola "                    │
+  │ 3. TerminalView detecta contenido multilínea o de portapapeles│
+  │    - Si contiene saltos de línea (\n o \r):                   │
+  │        Invoca mEmulator.paste(text) con bracketed paste      │
+  │    - Si es una sola línea:                                   │
+  │        Inserta texto plano en el cursor sin \r               │
   └──────────────────────────────┬───────────────────────────────┘
                                  │
                                  ▼
   ┌──────────────────────────────────────────────────────────────┐
-  │ 4. Resultado visible en Termux:                              │
-  │    $ Hola                                                    │
-  │    (Sin duplicación, sin saltos extraños, cursor al final)   │
+  │ 4. Resultado en pantalla de Termux:                          │
+  │    mkdir -p ~/.termux && \                                   │
+  │    curl -L -o ~/.termux/Iosevka.zip ... && \                 │
+  │    unzip -o ~/.termux/Iosevka.zip -d ~/.termux/ && \         │
+  │    cp ...                                                    │
+  │    (Limpio, sin ejecutarse solo, listo para pulsar Enter)    │
   └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -62,13 +64,11 @@ Resolver el conflicto del autocorrector de Gboard al escribir desde el teclado t
 
 ### 3. Decisiones Técnicas y Compensaciones (Trade-Offs)
 
-- **Eliminación de inyección redundante en `commitCorrection`**:
-  - *Enfoque*: En el framework de Android IME, `commitCorrection` es una notificación pasiva del teclado hacia el editor para resaltar sugerencias; la sustitución real de caracteres siempre viaja por `setComposingRegion` / `deleteSurroundingText` / `commitText`. Al suprimir la doble escritura en `commitCorrection`, evitamos que `"Hola"` se envíe dos veces.
-- **Búfer de palabra activa en `InputConnection`**:
-  - *Enfoque*: Implementar un `StringBuilder` o seguimiento de palabra en curso en la conexión de entrada. Cuando el IME solicita `getTextBeforeCursor(n, flags)`, devolvemos el contenido real del búfer en lugar de una cadena vacía.
-  - *Beneficio*: Gboard detecta con precisión los límites del texto y puede invocar `deleteSurroundingText` o `setComposingRegion` con los índices correctos.
-- **Preservación del soporte de imágenes y voz**:
-  - *Enfoque*: No alterar los tipos MIME declarados en `outAttrs.contentMimeTypes` ni el wrapper de `InputConnectionCompat.createWrapper()`, asegurando que los chips de capturas y el botón del micrófono sigan operativos al 100%.
+- **Uso directo de `mEmulator.paste(String text)`**:
+  - *Ventaja*: Es el método canónico y testeado en Termux para el pegado seguro desde el portapapeles. Limpia caracteres de escape peligrosos C1 (`0x80-0x9F`), unifica retornos de línea y emite los marcadores DECSET 2004 (`\033[200~` y `\033[201~`) reconocidos por bash/zsh/readline.
+  - *Comportamiento*: Idéntico al menú táctil nativo de Termux.
+- **Detección de texto multilínea vs texto continuo**:
+  - *Ventaja*: El tipeo normal y el dictado de palabras individuales siguen su flujo habitual a través de `sendTextToTerminal` y `mActiveWordBuffer`, mientras que cualquier inserción con saltos de línea pasa por el mecanismo de pegado seguro.
 
 ---
 
@@ -76,45 +76,36 @@ Resolver el conflicto del autocorrector de Gboard al escribir desde el teclado t
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ Gboard (IME)                                                             │
-│   ├── Suggestions & Autocorrect Engine                                   │
-│   ├── Queries: getTextBeforeCursor()                                     │
-│   └── Actions: deleteSurroundingText() / setComposingRegion() / commitText│
+│ Gboard (Portapapeles de texto)                                           │
+│   └── commitText(text, 1)                                                │
 └────────────────────────────────────┬─────────────────────────────────────┘
                                      │
                                      ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ TerminalView.java (InputConnection)                                      │
-│   ├── mActiveWordBuffer (Buffer de texto sincronizado antes del cursor)  │
-│   ├── getTextBeforeCursor(n, flags) -> Retorna buffer de palabra activa  │
-│   ├── deleteSurroundingText(before, after)                               │
-│   │     └── sendBackspace(before) + actualiza mActiveWordBuffer          │
-│   ├── commitText(text, newCursorPos)                                     │
-│   │     ├── Si mComposingRegionLength > 0 -> sendBackspace(length)       │
-│   │     ├── sendTextToTerminal(text)                                     │
-│   │     └── actualiza mActiveWordBuffer con delimitadores (espacio/enter)│
-│   └── commitCorrection(correctionInfo)                                   │
-│         └── Sincronización pasiva (no duplica sendTextToTerminal)        │
+│ TerminalView.java (commitText)                                           │
+│   ├── ¿Contiene saltos de línea (\n o \r)? o ¿Bloque largo de pegado?   │
+│   │     ├── SÍ -> mEmulator.paste(text.toString())                       │
+│   │     │         └── Emite \033[200~ + texto + \033[201~                │
+│   │     └── NO -> Inserción regular sin Enter (\r)                       │
+│   │               └── sendTextToTerminal(text) + mActiveWordBuffer       │
 └────────────────────────────────────┬─────────────────────────────────────┘
                                      │
                                      ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ TerminalSession / TerminalEmulator (PTY)                                 │
-│   ├── Recibe exactamente: \u007F\u007F\u007F ("Hla" borrado)             │
-│   └── Recibe: "Hola " (Texto corregido)                                  │
+│ TerminalSession / TerminalEmulator                                       │
+│   └── Shell recibe bloque seguro sin disparar ejecución prematura        │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
 #### Plan de Modificaciones
 
 1. **`terminal-view/src/main/java/com/termux/view/TerminalView.java`**:
-   - Ajustar el `InputConnection` creado en `onCreateInputConnection`:
-     - Incorporar `mActiveWordBuffer` para registrar los caracteres que se van escribiendo o pegando en la línea actual.
-     - Implementar `getTextBeforeCursor(int n, int flags)` para retornar el final de `mActiveWordBuffer`, permitiendo a Gboard conocer la palabra actual.
-     - En `deleteSurroundingText(int leftLength, int rightLength)`: recortar `mActiveWordBuffer` en `leftLength` caracteres y enviar `sendBackspace(leftLength)`.
-     - En `commitCorrection(CorrectionInfo correctionInfo)`: evitar la escritura manual redundante si la corrección ya está siendo gestionada por el flujo de composición/commit del IME.
-     - En `commitText(CharSequence text, int newCursorPosition)`: verificar si el reemplazo sustituye la palabra previa; si es así, retroceder la longitud correspondiente y registrar el nuevo texto en el búfer. Si el carácter es un delimitador (espacio o salto de línea), resetear el búfer de la palabra activa.
-     - En `sendKeyEvent`: al detectar `KEYCODE_ENTER` o `KEYCODE_DEL`, actualizar en sincronía el búfer local.
+   - En `InputConnection.commitText(CharSequence text, int newCursorPosition)`:
+     - Detectar si `text` contiene saltos de línea (`text.toString().indexOf('\n') >= 0 || text.toString().indexOf('\r') >= 0`).
+     - Si contiene saltos de línea y el emulador está activo, invocar `mEmulator.paste(text.toString())` y resetear el búfer de palabra activa (`mActiveWordBuffer.setLength(0)`).
+     - Si es texto de una sola línea, mantener el envío estándar sin ejecutar, actualizando el búfer local.
+     - Gestionar adecuadamente cualquier región en composición previa (`mComposingRegionLength`).
 
 2. **Verificación y Compilación**:
-   - Compilar el proyecto completo usando `compile_applet` para garantizar que la compilación de todos los módulos (`:terminal-view`, `:terminal-emulator`, `:termux-shared`, `:app`) sea exitosa.
+   - Validar con `compile_applet`.
+   - Ejecutar pruebas unitarias para certificar la no regresión.
