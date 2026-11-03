@@ -629,7 +629,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "Herramientas • Shell Avanzada",
             "Shell Zsh avanzada con Powerlevel10k, autocompletado y resaltado de sintaxis.",
             R.drawable.ic_pkg_terminal,
-            "pkg install zsh git curl -y\n" +
+            "pkg install zsh -y\n" +
             "rm -rf ~/.zsh ~/.zshrc\n" +
             "mkdir -p ~/.zsh/plugins ~/.zsh/themes\n" +
             "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zsh/themes/powerlevel10k\n" +
@@ -668,11 +668,6 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "bindkey '^[OA' up-line-or-beginning-search    # Flecha Arriba (modo aplicación)\n" +
             "bindkey '^[[B' down-line-or-beginning-search  # Flecha Abajo\n" +
             "bindkey '^[OB' down-line-or-beginning-search  # Flecha Abajo (modo aplicación)\n\n" +
-            "# Mapeo para Home y End en Zsh\n" +
-            "bindkey '^[[H' beginning-of-line\n" +
-            "bindkey '^[[F' end-of-line\n" +
-            "bindkey '^[[1~' beginning-of-line\n" +
-            "bindkey '^[[4~' end-of-line\n\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# Syntax Highlighting Styles\n" +
             "# ------------------------------------------------------------------------------\n" +
@@ -697,7 +692,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "# File Manager Integration (Yazi) & Keybindings\n" +
             "# ------------------------------------------------------------------------------\n" +
             "function yazi() {\n" +
-            "  local tmp=\"$(mktemp -t \"yazi-cwd.XXXXXX\")\" cwd\n" +
+            "  local tmp=\"$(mktemp -t \\\"yazi-cwd.XXXXXX\\\")\" cwd\n" +
             "  command yazi \"$@\" --cwd-file=\"$tmp\"\n" +
             "  IFS= read -r -d '' cwd < \"$tmp\"\n" +
             "  [ \"$cwd\" != \"$PWD\" ] && [ -d \"$cwd\" ] && builtin cd -- \"$cwd\"\n" +
@@ -706,12 +701,10 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "# ------------------------------------------------------------------------------\n" +
             "# Environment & PATH\n" +
             "# ------------------------------------------------------------------------------\n" +
-            "export PATH=\"$HOME/.local/bin:$PATH\"\n" +
-            "export PATH=$PATH:$GOPATH/bin\n" +
-            "export GOPATH=$HOME/go\n\n" +
+            "export PATH=\"$HOME/.local/bin:$PATH\"\n\n" +
             "# Gemini CLI & OpenWiki Gateway (Port 8085)\n" +
-            "export GEMINI_KEYS=\"${GEMINI_KEYS:-}\"\n" +
-            "export GEMINI_API_KEY=\"${GEMINI_API_KEY:-dummy_key}\"\n" +
+            "export GEMINI_KEYS=\"TU_API_KEY_AQUI\"\n" +
+            "export GEMINI_API_KEY=\"dummy_key\"\n" +
             "export GOOGLE_GEMINI_BASE_URL=\"http://127.0.0.1:8085\"\n" +
             "export LANGSMITH_GATEWAY=\"http://127.0.0.1:8085\"\n" +
             "export OPENWIKI_PROVIDER=\"gemini\"\n\n" +
@@ -722,33 +715,89 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "chsh -s zsh\n" +
             "exec zsh",
             "pkg uninstall zsh -y",
-            "pkg install zsh git curl -y && \\\n" +
-            "grep -q \"beginning-of-line\" ~/.zshrc 2>/dev/null || cat << 'EOF' >> ~/.zshrc\n\n" +
-            "# Mapeo para Home y End en Zsh\n" +
-            "bindkey '^[[H' beginning-of-line\n" +
-            "bindkey '^[[F' end-of-line\n" +
-            "bindkey '^[[1~' beginning-of-line\n" +
-            "bindkey '^[[4~' end-of-line\n" +
-            "EOF\n" +
-            "grep -q 'alias Cd=' ~/.zshrc 2>/dev/null || echo 'alias Cd=\"cd\"' >> ~/.zshrc\n" +
-            "grep -q 'alias Cat=' ~/.zshrc 2>/dev/null || echo 'alias Cat=\"cat\"' >> ~/.zshrc\n" +
-            "grep -q \"File Manager Integration (Yazi)\" ~/.zshrc 2>/dev/null || cat << 'EOF' >> ~/.zshrc\n" +
-            "\n" +
+            "cat << 'EOF' > ~/.zshrc\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Powerlevel10k Instant Prompt\n" +
+            "# Debe permanecer cerca del inicio para optimizar la carga del shell.\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "if [[ -r \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\" ]]; then\n" +
+            "  source \"${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh\"\n" +
+            "fi\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Theme & Visual Appearance\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "source ~/.zsh/themes/powerlevel10k/powerlevel10k.zsh-theme\n" +
+            "[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Plugins\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "source ~/.zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh\n" +
+            "source ~/.zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# History Settings\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "HISTFILE=~/.zsh_history\n" +
+            "HISTSIZE=10000\n" +
+            "SAVEHIST=10000\n" +
+            "setopt share_history hist_ignore_dups hist_ignore_space hist_verify\n\n" +
+            "# Búsqueda en el historial basada en lo ya escrito (Up/Down)\n" +
+            "autoload -Uz up-line-or-beginning-search down-line-or-beginning-search\n" +
+            "zle -N up-line-or-beginning-search\n" +
+            "zle -N down-line-or-beginning-search\n" +
+            "bindkey '^[[A' up-line-or-beginning-search    # Flecha Arriba\n" +
+            "bindkey '^[OA' up-line-or-beginning-search    # Flecha Arriba (modo aplicación)\n" +
+            "bindkey '^[[B' down-line-or-beginning-search  # Flecha Abajo\n" +
+            "bindkey '^[OB' down-line-or-beginning-search  # Flecha Abajo (modo aplicación)\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Syntax Highlighting Styles\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "typeset -A ZSH_HIGHLIGHT_STYLES\n" +
+            "ZSH_HIGHLIGHT_STYLES[command]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[alias]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[builtin]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[function]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[hashed-command]='fg=cyan'\n" +
+            "ZSH_HIGHLIGHT_STYLES[precommand]='fg=cyan'\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Aliases\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "alias X=\"exit\"\n" +
+            "alias C=\"clear\"\n" +
+            "alias Cd=\"cd\"\n" +
+            "alias Cat=\"cat\"\n" +
+            "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
+            "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
+            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# File Manager Integration (Yazi) & Keybindings\n" +
             "# ------------------------------------------------------------------------------\n" +
             "function yazi() {\n" +
-            "  local tmp=\"$(mktemp -t \"yazi-cwd.XXXXXX\")\" cwd\n" +
+            "  local tmp=\"$(mktemp -t \\\"yazi-cwd.XXXXXX\\\")\" cwd\n" +
             "  command yazi \"$@\" --cwd-file=\"$tmp\"\n" +
             "  IFS= read -r -d '' cwd < \"$tmp\"\n" +
             "  [ \"$cwd\" != \"$PWD\" ] && [ -d \"$cwd\" ] && builtin cd -- \"$cwd\"\n" +
             "  command rm -f -- \"$tmp\"\n" +
-            "}\n" +
-            "EOF",
+            "}\n\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "# Environment & PATH\n" +
+            "# ------------------------------------------------------------------------------\n" +
+            "export PATH=\"$HOME/.local/bin:$PATH\"\n\n" +
+            "# Gemini CLI & OpenWiki Gateway (Port 8085)\n" +
+            "export GEMINI_KEYS=\"TU_API_KEY_AQUI\"\n" +
+            "export GEMINI_API_KEY=\"dummy_key\"\n" +
+            "export GOOGLE_GEMINI_BASE_URL=\"http://127.0.0.1:8085\"\n" +
+            "export LANGSMITH_GATEWAY=\"http://127.0.0.1:8085\"\n" +
+            "export OPENWIKI_PROVIDER=\"gemini\"\n\n" +
+            "# Antigravity CLI Proxy (Port 8086)\n" +
+            "export CLOUD_CODE_URL=\"http://127.0.0.1:8086\"\n" +
+            "export MODEL_GOOGLE_JARVIS_PROXY=\"http://127.0.0.1:8086\"\n" +
+            "EOF\n" +
+            "chsh -s zsh\n" +
+            "exec zsh",
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/zsh",
             "4.9 ★",
             "20 MB",
-            "zsh",
+            "exec zsh",
             "p10k configure",
             null
         ));
@@ -890,7 +939,6 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "Google • Framework Web",
             "Herramienta oficial de línea de comandos de Google para inicializar, compilar y mantener aplicaciones Angular.",
             R.drawable.ic_pkg_angular,
-            "command -v npm >/dev/null 2>&1 || pkg install -y nodejs-lts\n" +
             "npm install -g @angular/cli",
             "npm uninstall -g @angular/cli",
             "npm install -g @angular/cli",
@@ -1013,9 +1061,46 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     private void executeShellCommandInTerminal(@NonNull StorePackageItem item, String title, String shellCommand, boolean isUninstall) {
         if (shellCommand == null || shellCommand.trim().isEmpty()) return;
 
+        String commandToSend = shellCommand.trim();
+
+        // Únicamente a zsh lo ejecutamos mediante un script .sh
+        if ("zsh".equals(item.getId()) && !isUninstall) {
+            boolean scriptWritten = false;
+            try {
+                File homeDir = new File(TermuxConstants.TERMUX_HOME_DIR_PATH);
+                if (!homeDir.exists()) homeDir.mkdirs();
+                File scriptFile = new File(homeDir, "setup_zsh.sh");
+                String scriptContent = "#!/data/data/com.termux/files/usr/bin/bash\n" +
+                    shellCommand.trim() + "\n";
+                try (FileOutputStream fos = new FileOutputStream(scriptFile)) {
+                    fos.write(scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                scriptFile.setExecutable(true, false);
+                commandToSend = "bash ~/setup_zsh.sh";
+                scriptWritten = true;
+            } catch (Exception ignored) {
+            }
+
+            if (!scriptWritten) {
+                try {
+                    File cacheDir = new File(getCacheDir(), "store_scripts");
+                    if (!cacheDir.exists()) cacheDir.mkdirs();
+                    File scriptFile = new File(cacheDir, "setup_zsh.sh");
+                    String scriptContent = "#!/data/data/com.termux/files/usr/bin/bash\n" +
+                        shellCommand.trim() + "\n";
+                    try (FileOutputStream fos = new FileOutputStream(scriptFile)) {
+                        fos.write(scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    }
+                    scriptFile.setExecutable(true, false);
+                    commandToSend = "bash " + scriptFile.getAbsolutePath();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
         Intent termuxIntent = new Intent(this, TermuxActivity.class);
         termuxIntent.setAction(TermuxActivity.ACTION_EXECUTE_IN_CURRENT_SESSION);
-        termuxIntent.putExtra(TermuxActivity.EXTRA_COMMAND, shellCommand.trim());
+        termuxIntent.putExtra(TermuxActivity.EXTRA_COMMAND, commandToSend);
         termuxIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         startActivity(termuxIntent);
 

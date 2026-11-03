@@ -936,7 +936,7 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
         if (session != null) {
             final TerminalSession finalSession = session;
-            final String toSend = command.endsWith("\n") || command.endsWith("\r") ? command : (command + "\r");
+            final String toSend = command.endsWith("\n") || command.endsWith("\r") ? command : (command + "\n");
             if (finalSession.isRunning()) {
                 finalSession.write(toSend);
                 if (mTerminalView != null) {
