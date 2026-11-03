@@ -350,16 +350,35 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
         // ==========================================
         // CATEGORÍA SYSTEM ("sistema")
         // Exact order:
-        // 1. Cambiar repositorio
-        // 2. Actualizar sistema
-        // 3. Termux storage
-        // 4. Termux backup
-        // 5. Termux restore
-        // 6. Test velocidad mirror
-        // 7. Hushlogin
+        // 1. Hushlogin (Silenciar Bienvenida)
+        // 2. Cambiar repositorio
+        // 3. Actualizar sistema
+        // 4. Termux storage
+        // 5. Termux backup
+        // 6. Termux restore
+        // 7. Test velocidad mirror
         // ==========================================
 
-        // Cambiar Repositorio
+        // 2.1 Hushlogin (Silenciar Bienvenida)
+        mAllPackages.add(new StorePackageItem(
+            "hushlogin",
+            "Hushlogin",
+            "sistema",
+            "Sistema • Silenciar Bienvenida",
+            "Oculta el mensaje de bienvenida y motd al abrir una nueva terminal en Termux (touch ~/.hushlogin).",
+            R.drawable.ic_pkg_terminal,
+            "touch ~/.hushlogin",
+            "rm -f ~/.hushlogin",
+            "touch ~/.hushlogin",
+            TermuxConstants.TERMUX_HOME_DIR_PATH + "/.hushlogin",
+            "4.9 ★",
+            "1 KB",
+            null,
+            "rm -f ~/.hushlogin",
+            null
+        ));
+
+        // 2.2 Cambiar Repositorio
         mAllPackages.add(new StorePackageItem(
             "termux-change-repo",
             "Cambiar Repositorio",
@@ -483,25 +502,6 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "2 MB",
             "termux-change-repo",
             "pkg help",
-            null
-        ));
-
-        // 2.7 Hushlogin (Silenciar Bienvenida)
-        mAllPackages.add(new StorePackageItem(
-            "hushlogin",
-            "Hushlogin",
-            "sistema",
-            "Sistema • Silenciar Bienvenida",
-            "Oculta el mensaje de bienvenida y motd al abrir una nueva terminal en Termux (touch ~/.hushlogin).",
-            R.drawable.ic_pkg_terminal,
-            "touch ~/.hushlogin",
-            "rm -f ~/.hushlogin",
-            "touch ~/.hushlogin",
-            TermuxConstants.TERMUX_HOME_DIR_PATH + "/.hushlogin",
-            "4.9 ★",
-            "1 KB",
-            null,
-            "rm -f ~/.hushlogin",
             null
         ));
     }
@@ -1011,103 +1011,14 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     }
 
     private void executeShellCommandInTerminal(@NonNull StorePackageItem item, String title, String shellCommand, boolean isUninstall) {
-        try {
-            File scriptDir = new File(getCacheDir(), "store_scripts");
-            if (!scriptDir.exists()) scriptDir.mkdirs();
-            String uniqueName = "run_store_action_" + System.currentTimeMillis() + ".sh";
-            File scriptFile = new File(scriptDir, uniqueName);
+        if (shellCommand == null || shellCommand.trim().isEmpty()) return;
 
-            String postBanner = isUninstall ? "" : buildPostInstallBanner(item);
+        Intent termuxIntent = new Intent(this, TermuxActivity.class);
+        termuxIntent.setAction(TermuxActivity.ACTION_EXECUTE_IN_CURRENT_SESSION);
+        termuxIntent.putExtra(TermuxActivity.EXTRA_COMMAND, shellCommand.trim());
+        termuxIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(termuxIntent);
 
-            String scriptContent = "#!/data/data/com.termux/files/usr/bin/bash\n" +
-                "sleep 0.15\n" +
-                "draw_divider() {\n" +
-                "  shopt -s checkwinsize 2>/dev/null\n" +
-                "  (:;:) 2>/dev/null\n" +
-                "  local cols=$(tput cols 2>/dev/null)\n" +
-                "  [ -z \"$cols\" ] || [ \"$cols\" -le 0 ] 2>/dev/null && cols=$(stty size 2>/dev/null | awk '{print $2}')\n" +
-                "  [ -z \"$cols\" ] || [ \"$cols\" -le 0 ] 2>/dev/null && cols=${COLUMNS:-0}\n" +
-                "  [ -z \"$cols\" ] || [ \"$cols\" -le 0 ] 2>/dev/null && cols=45\n" +
-                "  local target=$((cols > 2 ? cols - 1 : cols))\n" +
-                "  local d=\"────────────────────────────────────────────────────────────────────────────────────────────────────\"\n" +
-                "  local line=\"\"\n" +
-                "  while [ ${#line} -lt \"$target\" ]; do line=\"${line}${d}\"; done\n" +
-                "  echo -e \"\\033[90m${line:0:$target}\\033[0m\"\n" +
-                "}\n" +
-                "echo -e '\\033[1;32m●\\033[0m \\033[1;33mTermux Play Store: " + title + "\\033[0m'\n" +
-                "echo -e '\\033[1;34m$ " + shellCommand.replace("'", "'\\''") + "\\033[0m'\n" +
-                "draw_divider\n" +
-                shellCommand + "\n" +
-                "EXIT_CODE=$?\n" +
-                "draw_divider\n" +
-                "if [ $EXIT_CODE -eq 0 ]; then\n" +
-                "  echo -e '\\033[1;32m●\\033[0m \\033[1;33mProceso finalizado con éxito (código 0)\\033[0m'\n" +
-                postBanner +
-                "else\n" +
-                "  echo -e '\\033[1;31m●\\033[0m \\033[1;33mError al ejecutar (código '$EXIT_CODE')\\033[0m'\n" +
-                "fi\n" +
-                "echo ''\n" +
-                "echo 'Sesión activa para auditar y depurar'\n" +
-                "echo 'Escribe exit cuando desees cerrar esta sesión manualmente'\n" +
-                "echo ''\n" +
-                "if [ -n \"$SHELL\" ] && [ -x \"$SHELL\" ]; then\n" +
-                "  exec \"$SHELL\"\n" +
-                "elif [ -x /data/data/com.termux/files/usr/bin/bash ]; then\n" +
-                "  exec /data/data/com.termux/files/usr/bin/bash\n" +
-                "elif [ -x /data/data/com.termux/files/usr/bin/sh ]; then\n" +
-                "  exec /data/data/com.termux/files/usr/bin/sh\n" +
-                "else\n" +
-                "  exec /system/bin/sh\n" +
-                "fi\n";
-
-            try (FileOutputStream fos = new FileOutputStream(scriptFile)) {
-                fos.write(scriptContent.getBytes());
-            }
-            scriptFile.setExecutable(true, false);
-
-            final Uri scriptUri = UriUtils.getFileUri(scriptFile.getAbsolutePath());
-            Intent executeIntent = new Intent(TERMUX_SERVICE.ACTION_SERVICE_EXECUTE, scriptUri);
-            executeIntent.setClass(this, TermuxService.class);
-            executeIntent.putExtra(TERMUX_SERVICE.EXTRA_SHELL_NAME, title);
-            startService(executeIntent);
-
-            Intent termuxIntent = new Intent(this, TermuxActivity.class);
-            termuxIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            startActivity(termuxIntent);
-
-            Toast.makeText(this, "Ejecutando en la terminal: " + title, Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            Toast.makeText(this, "Error preparando script: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private String buildPostInstallBanner(StorePackageItem item) {
-        if (item == null) return "";
-        StringBuilder sb = new StringBuilder();
-        sb.append("  echo ''\n");
-        sb.append("  echo '").append(escapeForBashEcho(item.getTitle())).append(" completado con éxito'\n");
-
-        if (item.getInitGuide() != null && !item.getInitGuide().trim().isEmpty()) {
-            sb.append("  echo ''\n");
-            sb.append("  echo 'CÓMO INICIALIZAR / COMENZAR:'\n");
-            for (String line : item.getInitGuide().split("\n")) {
-                sb.append("  echo '  ").append(escapeForBashEcho(line)).append("'\n");
-            }
-        }
-
-        if (item.getHelpGuide() != null && !item.getHelpGuide().trim().isEmpty()) {
-            sb.append("  echo ''\n");
-            sb.append("  echo 'COMANDOS DE AYUDA Y DOCUMENTACIÓN:'\n");
-            for (String line : item.getHelpGuide().split("\n")) {
-                sb.append("  echo '  ").append(escapeForBashEcho(line)).append("'\n");
-            }
-        }
-
-        return sb.toString();
-    }
-
-    private String escapeForBashEcho(String text) {
-        if (text == null) return "";
-        return text.replace("\\", "\\\\").replace("'", "'\\''");
+        Toast.makeText(this, "Ejecutando en la sesión actual: " + title, Toast.LENGTH_SHORT).show();
     }
 }

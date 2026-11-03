@@ -192,6 +192,9 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     private static final String ARG_TERMINAL_TOOLBAR_TEXT_INPUT = "terminal_toolbar_text_input";
     private static final String ARG_ACTIVITY_RECREATED = "activity_recreated";
 
+    public static final String ACTION_EXECUTE_IN_CURRENT_SESSION = "com.termux.app.action.EXECUTE_IN_CURRENT_SESSION";
+    public static final String EXTRA_COMMAND = "com.termux.app.extra.COMMAND";
+
     private static final String LOG_TAG = "TermuxActivity";
 
     @Override
@@ -304,6 +307,15 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (mTermuxService != null) {
+            handleExecuteInCurrentSessionIntent(intent);
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
 
@@ -320,6 +332,10 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         // Check if a crash happened on last run of the app or if a plugin crashed and show a
         // notification with the crash details if it did
         TermuxCrashUtils.notifyAppCrashFromCrashLogFile(this, LOG_TAG);
+
+        if (mTermuxService != null) {
+            handleExecuteInCurrentSessionIntent(getIntent());
+        }
 
         mIsOnResumeAfterOnCreate = false;
     }
@@ -429,6 +445,8 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
 
         // Update the {@link TerminalSession} and {@link TerminalEmulator} clients.
         mTermuxService.setTermuxTerminalSessionClient(mTermuxTerminalSessionActivityClient);
+
+        handleExecuteInCurrentSessionIntent(getIntent());
     }
 
     @Override
@@ -906,6 +924,44 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
             return mTerminalView.getCurrentSession();
         else
             return null;
+    }
+
+    public void executeCommandInCurrentSession(@NonNull final String command) {
+        TerminalSession session = getCurrentSession();
+        if (session == null || !session.isRunning()) {
+            if (mTermuxTerminalSessionActivityClient != null) {
+                mTermuxTerminalSessionActivityClient.addNewSession(false, null);
+                session = getCurrentSession();
+            }
+        }
+        if (session != null) {
+            final TerminalSession finalSession = session;
+            final String toSend = command.endsWith("\n") || command.endsWith("\r") ? command : (command + "\r");
+            if (finalSession.isRunning()) {
+                finalSession.write(toSend);
+                if (mTerminalView != null) {
+                    mTerminalView.onScreenUpdated();
+                }
+            } else if (mTerminalView != null) {
+                mTerminalView.postDelayed(() -> {
+                    if (finalSession.isRunning()) {
+                        finalSession.write(toSend);
+                        mTerminalView.onScreenUpdated();
+                    }
+                }, 300);
+            }
+        }
+    }
+
+    public void handleExecuteInCurrentSessionIntent(@Nullable Intent intent) {
+        if (intent == null) return;
+        if (ACTION_EXECUTE_IN_CURRENT_SESSION.equals(intent.getAction())) {
+            String command = intent.getStringExtra(EXTRA_COMMAND);
+            if (command != null && !command.trim().isEmpty()) {
+                executeCommandInCurrentSession(command);
+            }
+            setIntent(null);
+        }
     }
 
     public TermuxAppSharedPreferences getPreferences() {

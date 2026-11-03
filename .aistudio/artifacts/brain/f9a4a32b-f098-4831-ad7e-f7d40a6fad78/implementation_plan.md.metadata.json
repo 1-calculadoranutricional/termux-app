@@ -1,0 +1,6 @@
+{
+  "summary": "Plan de implementación para ejecutar comandos de instalación y herramientas directamente en la sesión activa de Termux desde la Play Store, eliminando la creación de scripts .sh temporales y la apertura de sesiones secundarias múltiples.",
+  "updatedAt": "2026-11-03T05:36:17.822022572Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
