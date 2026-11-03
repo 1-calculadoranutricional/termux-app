@@ -280,7 +280,6 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "IA y CLI • Wiki & Arquitectura",
             "Herramienta CLI para generar y consultar documentación de arquitectura, grafos de dependencias y wikis técnicas.",
             R.drawable.ic_pkg_openwiki,
-            "command -v npm >/dev/null 2>&1 || pkg install -y nodejs-lts\n" +
             "npm install -g --allow-scripts=node-pty,@github/keytar,better-sqlite3 openwiki",
             "npm uninstall -g openwiki",
             "npm install -g --allow-scripts=node-pty,@github/keytar,better-sqlite3 openwiki",
@@ -532,6 +531,32 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null
         ));
 
+        // Git Config
+        mAllPackages.add(new StorePackageItem(
+            "git-config",
+            "Git Config",
+            "desarrollo",
+            "Desarrollo • Configurar Usuario",
+            "Configura de forma interactiva tu nombre de usuario y correo global en Git.",
+            R.drawable.ic_pkg_git,
+            "python3 -c '\n" +
+            "import subprocess\n" +
+            "u = input(\"Usuario (user.name): \")\n" +
+            "e = input(\"Correo (user.email): \")\n" +
+            "subprocess.run([\"git\", \"config\", \"--global\", \"user.name\", u])\n" +
+            "subprocess.run([\"git\", \"config\", \"--global\", \"user.email\", e])\n" +
+            "print(\"¡Listo! Configurado con éxito.\")\n" +
+            "'",
+            null,
+            null,
+            null,
+            "4.9 ★",
+            "1 KB",
+            "git config --list",
+            "git config --help",
+            null
+        ));
+
         // 3.2 GitHub CLI (gh)
         mAllPackages.add(new StorePackageItem(
             "gh",
@@ -664,6 +689,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "alias X=\"exit\"\n" +
             "alias C=\"clear\"\n" +
             "alias Cd=\"cd\"\n" +
+            "alias Cat=\"cat\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
             "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n" +
@@ -705,6 +731,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "bindkey '^[[4~' end-of-line\n" +
             "EOF\n" +
             "grep -q 'alias Cd=' ~/.zshrc 2>/dev/null || echo 'alias Cd=\"cd\"' >> ~/.zshrc\n" +
+            "grep -q 'alias Cat=' ~/.zshrc 2>/dev/null || echo 'alias Cat=\"cat\"' >> ~/.zshrc\n" +
             "grep -q \"File Manager Integration (Yazi)\" ~/.zshrc 2>/dev/null || cat << 'EOF' >> ~/.zshrc\n" +
             "\n" +
             "# ------------------------------------------------------------------------------\n" +
