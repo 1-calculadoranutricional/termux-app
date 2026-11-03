@@ -358,6 +358,28 @@ public final class TerminalView extends View {
         InputConnection baseInputConnection = new BaseInputConnection(this, true) {
 
             private int mComposingRegionLength = 0;
+            private final StringBuilder mActiveWordBuffer = new StringBuilder();
+
+            private void appendToBuffer(CharSequence text) {
+                if (text == null) return;
+                for (int i = 0; i < text.length(); i++) {
+                    char c = text.charAt(i);
+                    if (c == '\r' || c == '\n') {
+                        mActiveWordBuffer.setLength(0);
+                    } else {
+                        mActiveWordBuffer.append(c);
+                    }
+                }
+                if (mActiveWordBuffer.length() > 512) {
+                    mActiveWordBuffer.delete(0, mActiveWordBuffer.length() - 256);
+                }
+            }
+
+            private void removeFromBuffer(int count) {
+                if (count <= 0 || mActiveWordBuffer.length() == 0) return;
+                int toDelete = Math.min(count, mActiveWordBuffer.length());
+                mActiveWordBuffer.delete(mActiveWordBuffer.length() - toDelete, mActiveWordBuffer.length());
+            }
 
             private void sendBackspace(int count) {
                 if (mTermSession == null || count <= 0) return;
@@ -384,9 +406,41 @@ public final class TerminalView extends View {
             }
 
             @Override
+            public CharSequence getTextBeforeCursor(int n, int flags) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: getTextBeforeCursor(" + n + ", " + flags + ")");
+                }
+                if (n <= 0 || mActiveWordBuffer.length() == 0) return "";
+                int len = mActiveWordBuffer.length();
+                int start = Math.max(0, len - n);
+                return mActiveWordBuffer.substring(start, len);
+            }
+
+            @Override
+            public CharSequence getTextAfterCursor(int n, int flags) {
+                if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
+                    mClient.logInfo(LOG_TAG, "IME: getTextAfterCursor(" + n + ", " + flags + ")");
+                }
+                return "";
+            }
+
+            @Override
+            public CharSequence getSelectedText(int flags) {
+                return "";
+            }
+
+            @Override
             public boolean sendKeyEvent(KeyEvent event) {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: sendKeyEvent(" + event + ")");
+                }
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    int keyCode = event.getKeyCode();
+                    if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                        mActiveWordBuffer.setLength(0);
+                    } else if (keyCode == KeyEvent.KEYCODE_DEL) {
+                        removeFromBuffer(1);
+                    }
                 }
                 if (mTermSession != null && !mTermSession.isRunning()) {
                     int keyCode = event.getKeyCode();
@@ -416,6 +470,7 @@ public final class TerminalView extends View {
                 Editable content = getEditable();
                 if (content != null && content.length() > 0) {
                     sendTextToTerminal(content);
+                    appendToBuffer(content);
                     content.clear();
                 }
                 return true;
@@ -437,6 +492,7 @@ public final class TerminalView extends View {
                 }
                 if (mComposingRegionLength > 0) {
                     sendBackspace(mComposingRegionLength);
+                    removeFromBuffer(mComposingRegionLength);
                     mComposingRegionLength = 0;
                 }
                 if (mTermSession != null && !mTermSession.isRunning()) {
@@ -457,7 +513,11 @@ public final class TerminalView extends View {
                 Editable content = getEditable();
                 if (content != null && content.length() > 0) {
                     sendTextToTerminal(content);
+                    appendToBuffer(content);
                     content.clear();
+                } else if (text != null && text.length() > 0) {
+                    sendTextToTerminal(text);
+                    appendToBuffer(text);
                 }
                 return true;
             }
@@ -469,6 +529,7 @@ public final class TerminalView extends View {
                 }
                 if (mComposingRegionLength > 0) {
                     sendBackspace(mComposingRegionLength);
+                    removeFromBuffer(mComposingRegionLength);
                     mComposingRegionLength = 0;
                 }
                 if (mTermSession != null && !mTermSession.isRunning()) {
@@ -490,16 +551,10 @@ public final class TerminalView extends View {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: commitCorrection(" + correctionInfo + ")");
                 }
-                if (correctionInfo != null) {
-                    CharSequence oldText = correctionInfo.getOldText();
-                    CharSequence newText = correctionInfo.getNewText();
-                    if (oldText != null && newText != null) {
-                        sendBackspace(oldText.length());
-                        sendTextToTerminal(newText);
-                        return true;
-                    }
-                }
-                return super.commitCorrection(correctionInfo);
+                // In Android IME protocol, commitCorrection is an informational notification.
+                // The actual text substitution is performed by the IME via deleteSurroundingText,
+                // setComposingRegion, or commitText. We must not emit duplicate text here.
+                return true;
             }
 
             @Override
@@ -509,6 +564,7 @@ public final class TerminalView extends View {
                 }
                 sendBackspace(leftLength);
                 sendDeleteForward(rightLength);
+                removeFromBuffer(leftLength);
                 return super.deleteSurroundingText(leftLength, rightLength);
             }
 
@@ -519,6 +575,7 @@ public final class TerminalView extends View {
                 }
                 sendBackspace(beforeLength);
                 sendDeleteForward(afterLength);
+                removeFromBuffer(beforeLength);
                 return super.deleteSurroundingTextInCodePoints(beforeLength, afterLength);
             }
 
@@ -527,6 +584,7 @@ public final class TerminalView extends View {
                 if (TERMINAL_VIEW_KEY_LOGGING_ENABLED) {
                     mClient.logInfo(LOG_TAG, "IME: performEditorAction(" + actionCode + ")");
                 }
+                mActiveWordBuffer.setLength(0);
                 if (mTermSession != null && !mTermSession.isRunning()) {
                     mClient.onCodePoint('\r', false, mTermSession);
                     return true;
