@@ -167,6 +167,30 @@ public final class TerminalView extends View {
                     return true;
                 }
                 requestFocus();
+
+                // Move cursor to tap position on the active command line
+                if (!mEmulator.isMouseTrackingActive() && mTopRow == 0 && mTermSession != null && mTermSession.isRunning()) {
+                    int[] colRow = getColumnAndRow(event, false);
+                    int touchCol = Math.max(0, Math.min(colRow[0], mEmulator.mColumns - 1));
+                    int touchRow = colRow[1];
+                    int cursorCol = mEmulator.getCursorCol();
+                    int cursorRow = mEmulator.getCursorRow();
+
+                    if (touchRow == cursorRow && touchCol != cursorCol) {
+                        int colDiff = touchCol - cursorCol;
+                        boolean cursorApp = mEmulator.isCursorKeysApplicationMode();
+                        String arrowCode = colDiff < 0
+                            ? (cursorApp ? "\033OD" : "\033[D")
+                            : (cursorApp ? "\033OC" : "\033[C");
+                        int count = Math.abs(colDiff);
+                        StringBuilder sb = new StringBuilder(count * 4);
+                        for (int i = 0; i < count; i++) {
+                            sb.append(arrowCode);
+                        }
+                        mTermSession.write(sb.toString());
+                    }
+                }
+
                 mClient.onSingleTapUp(event);
                 return true;
             }
