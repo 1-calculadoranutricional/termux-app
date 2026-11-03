@@ -1,6 +1,6 @@
 {
-  "summary": "Plan de implementación para habilitar bracketed paste al pegar bloques de texto o comandos multilínea desde el portapapeles de Gboard en Termux, evitando que se ejecuten automáticamente o se rompa el prompt secundario, e insertando texto de una sola línea limpiamente sin presionar Enter.",
-  "updatedAt": "2026-11-03T23:08:37.273545280Z",
+  "summary": "Plan de implementación para restaurar la ejecución de comandos con la tecla Enter en el teclado virtual (Gboard) diferenciando saltos de línea aislados (\\n) que ejecutan comandos con retorno de carro (\\r), de bloques de texto multilínea pegados que usan bracketed paste.",
+  "updatedAt": "2026-11-03T23:22:36.462450738Z",
   "requestFeedback": true,
   "userFacing": true
 }

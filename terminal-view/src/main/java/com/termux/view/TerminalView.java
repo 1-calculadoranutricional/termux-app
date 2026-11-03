@@ -470,7 +470,11 @@ public final class TerminalView extends View {
                 Editable content = getEditable();
                 if (content != null && content.length() > 0) {
                     String str = content.toString();
-                    if (str.indexOf('\n') >= 0 || str.indexOf('\r') >= 0) {
+                    boolean isSolitaryNewline = str.equals("\n") || str.equals("\r") || str.equals("\r\n");
+                    if (isSolitaryNewline) {
+                        sendTextToTerminal("\r");
+                        mActiveWordBuffer.setLength(0);
+                    } else if (str.indexOf('\n') >= 0 || str.indexOf('\r') >= 0) {
                         stopTextSelectionMode();
                         mEmulator.paste(str);
                         mActiveWordBuffer.setLength(0);
@@ -519,7 +523,16 @@ public final class TerminalView extends View {
 
                 if (text != null) {
                     String str = text.toString();
-                    if (str.indexOf('\n') >= 0 || str.indexOf('\r') >= 0) {
+                    boolean isSolitaryNewline = str.equals("\n") || str.equals("\r") || str.equals("\r\n");
+                    if (isSolitaryNewline) {
+                        sendTextToTerminal("\r");
+                        mActiveWordBuffer.setLength(0);
+                        Editable content = getEditable();
+                        if (content != null) {
+                            content.clear();
+                        }
+                        return true;
+                    } else if (str.indexOf('\n') >= 0 || str.indexOf('\r') >= 0) {
                         stopTextSelectionMode();
                         mEmulator.paste(str);
                         mActiveWordBuffer.setLength(0);
@@ -534,7 +547,11 @@ public final class TerminalView extends View {
                 Editable content = getEditable();
                 if (content != null && content.length() > 0) {
                     String contentStr = content.toString();
-                    if (contentStr.indexOf('\n') >= 0 || contentStr.indexOf('\r') >= 0) {
+                    boolean isSolitaryNewline = contentStr.equals("\n") || contentStr.equals("\r") || contentStr.equals("\r\n");
+                    if (isSolitaryNewline) {
+                        sendTextToTerminal("\r");
+                        mActiveWordBuffer.setLength(0);
+                    } else if (contentStr.indexOf('\n') >= 0 || contentStr.indexOf('\r') >= 0) {
                         stopTextSelectionMode();
                         mEmulator.paste(contentStr);
                         mActiveWordBuffer.setLength(0);
