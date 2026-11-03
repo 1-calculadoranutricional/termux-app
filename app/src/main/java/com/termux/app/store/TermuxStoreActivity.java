@@ -509,10 +509,67 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
     private void initDevPackages() {
         // ==========================================
         // CATEGORÍA DEV ("desarrollo")
-        // Exact order: git, gh cli, node y npm
+        // Exact order: npm, python, node, git, git config, gh cli
         // ==========================================
 
-        // Git
+        // 3.1 NPM
+        mAllPackages.add(new StorePackageItem(
+            "npm-update",
+            "NPM",
+            "desarrollo",
+            "Desarrollo • Node.js Package Manager",
+            "Instala o actualiza Node.js/NPM y ejecuta npm install -g npm para tener la última versión global.",
+            R.drawable.ic_pkg_code,
+            "pkg install npm -y && npm install -g npm",
+            "pkg uninstall npm -y",
+            "pkg install npm -y && npm install -g npm",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/npm",
+            "4.8 ★",
+            "18 MB",
+            "npm",
+            "npm --help",
+            null
+        ));
+
+        // 3.2 Python
+        mAllPackages.add(new StorePackageItem(
+            "python",
+            "Python",
+            "desarrollo",
+            "Desarrollo • Lenguaje de Programación",
+            "Lenguaje de programación interpretado de alto nivel y propósitos generales con el gestor pip.",
+            R.drawable.ic_pkg_code,
+            "pkg install python -y",
+            "pkg uninstall python -y",
+            "pkg install python -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/python:" + TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/python3",
+            "4.9 ★",
+            "45 MB",
+            "python",
+            "python --help",
+            null
+        ));
+
+        // 3.3 Node.js LTS
+        mAllPackages.add(new StorePackageItem(
+            "nodejs-lts",
+            "Node.js LTS",
+            "desarrollo",
+            "Desarrollo • Javascript Runtime",
+            "Entorno de ejecución para JavaScript en el servidor (Long Term Support) con gestor de paquetes npm.",
+            R.drawable.ic_pkg_code,
+            "pkg install nodejs-lts -y",
+            "pkg uninstall nodejs-lts -y",
+            "pkg install nodejs-lts -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/node",
+            "4.8 ★",
+            "35 MB",
+            "node",
+            "node --help",
+            null
+        ));
+
+        // 3.4 Git
         mAllPackages.add(new StorePackageItem(
             "git",
             "Git",
@@ -531,7 +588,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null
         ));
 
-        // Git Config
+        // 3.5 Git Config
         mAllPackages.add(new StorePackageItem(
             "git-config",
             "Git Config",
@@ -557,7 +614,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             null
         ));
 
-        // 3.2 GitHub CLI (gh)
+        // 3.6 GitHub CLI (gh)
         mAllPackages.add(new StorePackageItem(
             "gh",
             "GitHub CLI (gh)",
@@ -573,44 +630,6 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "25 MB",
             "gh auth login",
             "gh --help",
-            null
-        ));
-
-        // 3.3 Node.js LTS
-        mAllPackages.add(new StorePackageItem(
-            "nodejs-lts",
-            "Node.js LTS",
-            "desarrollo",
-            "Desarrollo • Javascript Runtime",
-            "Entorno de ejecución para JavaScript en el servidor (Long Term Support) con gestor de paquetes npm.",
-            R.drawable.ic_pkg_code,
-            "pkg install nodejs-lts -y",
-            "pkg uninstall nodejs-lts -y",
-            "pkg install nodejs-lts -y",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/node",
-            "4.8 ★",
-            "35 MB",
-            "node",
-            "node --help",
-            null
-        ));
-
-        // 3.4 NPM
-        mAllPackages.add(new StorePackageItem(
-            "npm-update",
-            "NPM",
-            "desarrollo",
-            "Desarrollo • Node.js Package Manager",
-            "Instala o actualiza Node.js/NPM y ejecuta npm install -g npm para tener la última versión global.",
-            R.drawable.ic_pkg_code,
-            "pkg install npm -y && npm install -g npm",
-            "pkg uninstall npm -y",
-            "pkg install npm -y && npm install -g npm",
-            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/npm",
-            "4.8 ★",
-            "18 MB",
-            "npm",
-            "npm --help",
             null
         ));
     }
@@ -881,6 +900,25 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "8 MB",
             "termux-reload-settings",
             "rm -f ~/.termux/font.ttf && termux-reload-settings",
+            null
+        ));
+
+        // 4.5 Which
+        mAllPackages.add(new StorePackageItem(
+            "which",
+            "Which",
+            "herramientas",
+            "Herramientas • Localizador de Binarios",
+            "Localiza y muestra la ruta completa de ejecutables en el entorno PATH.",
+            R.drawable.ic_pkg_terminal,
+            "pkg install which -y",
+            "pkg uninstall which -y",
+            "pkg install which -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/which",
+            "4.8 ★",
+            "1 MB",
+            "which <comando>",
+            "which --help",
             null
         ));
     }
