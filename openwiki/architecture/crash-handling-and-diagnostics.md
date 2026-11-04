@@ -14,6 +14,9 @@ sources:
     resource: repo://termux-shared/src/main/java/com/termux/shared/activities/TextIOActivity.java
   - id: openwiki-source-termux-application
     resource: repo://app/src/main/java/com/termux/app/TermuxApplication.java
+verified:
+  - by: manual-audit
+    at: 2026-11-04T03:00:00.000Z
 ---
 
 # Crash Handling & Diagnostics Architecture

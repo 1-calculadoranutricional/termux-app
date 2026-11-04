@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-bootstrap-installation-audit",
+  "claims": [
+    {
+      "id": "claim_installer_primary_user_validation",
+      "statement": "TermuxInstaller enforces that Termux only runs as the primary Android device owner and validates prefix directory accessibility.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxInstaller.java#L65-L105",
+          "version": "repo-lines-v1:sha256:installer-primary-user"
+        }
+      ]
+    },
+    {
+      "id": "claim_installer_native_zip_extraction",
+      "statement": "TermuxInstaller extracts bootstrap zip bytes dynamically from libtermux-bootstrap.so via JNI getZip into a staging prefix directory.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxInstaller.java#L155-L205",
+          "version": "repo-lines-v1:sha256:installer-zip-extract"
+        },
+        {
+          "resource": "repo://app/src/main/cpp/termux-bootstrap.c#L1-L30",
+          "version": "repo-lines-v1:sha256:bootstrap-c-jni"
+        }
+      ]
+    },
+    {
+      "id": "claim_installer_symlinks_and_promotion",
+      "statement": "TermuxInstaller parses SYMLINKS.txt to establish symlinks via Os.symlink and atomically promotes staging prefix to active prefix.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxInstaller.java#L205-L230",
+          "version": "repo-lines-v1:sha256:installer-symlink-promotion"
+        }
+      ]
+    },
+    {
+      "id": "claim_installer_storage_symlinks",
+      "statement": "TermuxInstaller creates directory symlinks under ~/storage to Android shared storage directories.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxInstaller.java#L277-L365",
+          "version": "repo-lines-v1:sha256:installer-storage-symlinks"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T03:00:00.000Z"
+  }
+}

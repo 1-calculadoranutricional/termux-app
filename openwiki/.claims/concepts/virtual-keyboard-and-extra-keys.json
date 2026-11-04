@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-virtual-keyboard-extra-keys-audit",
+  "claims": [
+    {
+      "id": "claim_extra_keys_view_grid_layout",
+      "statement": "ExtraKeysView dynamically generates a touch-accessible grid of buttons supporting long-press repeat, haptic feedback, and multi-directional swipe actions.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/termux/extrakeys/ExtraKeysView.java#L35-L120",
+          "version": "repo-lines-v1:sha256:extra-keys-view-grid"
+        }
+      ]
+    },
+    {
+      "id": "claim_special_button_modifier_states",
+      "statement": "SpecialButton and SpecialButtonState manage modifier keys (Ctrl, Alt, Shift, Fn) with INACTIVE, ACTIVE, and LOCKED tri-state transitions.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/termux/extrakeys/SpecialButton.java#L15-L65",
+          "version": "repo-lines-v1:sha256:special-button-state"
+        }
+      ]
+    },
+    {
+      "id": "claim_termux_terminal_extra_keys_actions",
+      "statement": "TermuxTerminalExtraKeys intercepts custom actions like KEYBOARD, DRAWER, PASTE, SCROLL, F, and Y, delegating terminal inputs to TerminalSession.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/terminal/io/TermuxTerminalExtraKeys.java#L85-L128",
+          "version": "repo-lines-v1:sha256:termux-terminal-extra-keys"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T03:00:00.000Z"
+  }
+}

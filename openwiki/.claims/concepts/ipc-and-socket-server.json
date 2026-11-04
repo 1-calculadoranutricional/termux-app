@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-ipc-socket-server-audit",
+  "claims": [
+    {
+      "id": "claim_am_socket_server_local_domain",
+      "statement": "TermuxAmSocketServer hosts an AF_UNIX filesystem domain socket server to execute activity manager commands without spawning new JVM processes.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/termux/shell/am/TermuxAmSocketServer.java#L35-L95",
+          "version": "repo-lines-v1:sha256:termux-am-socket-setup"
+        }
+      ]
+    },
+    {
+      "id": "claim_peer_cred_security_enforcement",
+      "statement": "LocalSocketManager inspects caller credentials via SO_PEERCRED, ensuring only the Termux UID or root can connect, and executes commands with Termux permissions.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/cpp/local-socket.cpp#L20-L80",
+          "version": "repo-lines-v1:sha256:local-socket-cpp-peercred"
+        },
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/net/socket/local/PeerCred.java#L15-L50",
+          "version": "repo-lines-v1:sha256:peer-cred-model"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T03:00:00.000Z"
+  }
+}

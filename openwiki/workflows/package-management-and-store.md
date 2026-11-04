@@ -12,6 +12,9 @@ sources:
     resource: repo://app/src/main/java/com/termux/app/store/StorePackageAdapter.java
   - id: openwiki-source-termux-activity
     resource: repo://app/src/main/java/com/termux/app/TermuxActivity.java
+verified:
+  - by: manual-audit
+    at: 2026-11-04T03:00:00.000Z
 ---
 
 # Termux Store & Package Management Workflow

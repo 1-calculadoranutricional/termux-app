@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-crash-diagnostics-audit",
+  "claims": [
+    {
+      "id": "claim_crash_handler_ueh_interception",
+      "statement": "CrashHandler implements Thread.UncaughtExceptionHandler and captures unhandled exceptions across main and background threads, preserving default UEH delegation.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/crash/CrashHandler.java#L23-L75",
+          "version": "repo-lines-v1:sha256:crashhandler-ueh"
+        }
+      ]
+    },
+    {
+      "id": "claim_termux_crash_utils_notification",
+      "statement": "TermuxCrashUtils formats forensic markdown crash reports and dispatches high-priority system notifications that launch ReportActivity with ReportInfo.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/termux/crash/TermuxCrashUtils.java#L40-L115",
+          "version": "repo-lines-v1:sha256:crashutils-notif"
+        }
+      ]
+    },
+    {
+      "id": "claim_report_activity_markwon_ui",
+      "statement": "ReportActivity displays forensic logs using Markwon Markdown rendering and provides copy/share clipboard and intent options.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/activities/ReportActivity.java#L35-L95",
+          "version": "repo-lines-v1:sha256:report-activity-markwon"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T03:00:00.000Z"
+  }
+}

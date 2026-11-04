@@ -1,55 +1,145 @@
+# Protocolo Operativo para el Agente de Google AI Studio (AGENTS.md)
+
+Este documento define el protocolo operativo de desarrollo, navegación, edición y verificación de código para el **agente de software de Google AI Studio** en este repositorio. Cada directriz está directamente mapeada a las herramientas nativas y al entorno de ejecución en la nube.
+
+---
+
 <!-- OPENWIKI:START -->
-## OpenWiki & Conceptual Framework (MANDATORY STEP 1)
+## FASE 1: Contextualización Conceptual Obligatoria (OpenWiki)
 
-In repositories with an `openwiki/` directory, you **MUST** ground your conceptual understanding of the repository architecture and subsystem workflows **BEFORE** using CodeGraph or inspecting code:
+Antes de inspeccionar código fuente o utilizar herramientas de búsqueda, **DEBES** fundamentar tu comprensión conceptual de la arquitectura y los subsistemas en la documentación de `openwiki/`:
 
-1. **Mandatory Conceptual Routing**:
-   - At the start of a task involving architecture, features, or workflows, first inspect `openwiki/quickstart.md` to identify the relevant domain.
-   - The repository is organized into three major areas across 4 modules (`:app`, `:termux-shared`, `:terminal-view`, `:terminal-emulator`):
-     - **Architecture**: `openwiki/architecture/overview.md` (topology & services), `modules-and-dependencies.md` (multi-module Gradle structure), and `crash-handling-and-diagnostics.md` (uncaught exceptions, telemetry & report UI).
-     - **Concepts**: `openwiki/concepts/terminal-emulation.md` (VT/ANSI engine) and `rendering-and-view.md` (terminal view & touch pipelines).
-     - **Workflows**: `openwiki/workflows/session-lifecycle.md` (session creation & execution), `command-execution.md` (RunCommandService & intent APIs), `package-management-and-store.md` (Termux Store & package lifecycle), and `storage-access-and-file-sharing.md` (Storage Access Framework & external file sharing).
+1. **Enrutamiento Conceptual con `view_file`**:
+   - Al inicio de cualquier tarea que involucre arquitectura, módulos o flujos, ejecuta `view_file` sobre `/openwiki/quickstart.md` para identificar el dominio exacto.
+   - El proyecto se divide en 4 módulos Gradle (`:app`, `:termux-shared`, `:terminal-view`, `:terminal-emulator`) distribuidos en 3 áreas canónicas:
+     - **Arquitectura (`openwiki/architecture/`)**:
+       - `overview.md`: Topología de componentes, procesos, servicios (`TermuxService`) y fronteras de seguridad.
+       - `modules-and-dependencies.md`: Estructura multi-módulo Gradle y resolución de dependencias.
+       - `crash-handling-and-diagnostics.md`: Intercepción de excepciones (`CrashHandler`), telemetría forense y visor Markwon (`ReportActivity`).
+     - **Conceptos (`openwiki/concepts/`)**:
+       - `terminal-emulation.md`: Motor DEC VT/ANSI, buffers de pantalla (`TerminalBuffer`, `TerminalRow`) y anchos Unicode (`WcWidth`).
+       - `rendering-and-view.md`: Renderizado en `Canvas` (`TerminalView`, `TerminalRenderer`), gestos táctiles y selección de texto.
+       - `virtual-keyboard-and-extra-keys.md`: Barra virtual de teclas (`ExtraKeysView`), modificadores (`SpecialButton`), gestos y matrices de `termux.properties`.
+       - `ipc-and-socket-server.md`: Servidor socket `AF_UNIX` local (`AmSocketServer`), autenticación por `SO_PEERCRED` y despacho de intents `am`.
+     - **Flujos de Trabajo (`openwiki/workflows/`)**:
+       - `session-lifecycle.md`: Ciclo de vida de terminal sessions, procesos PTY y vinculación con `TermuxService`.
+       - `command-execution.md`: Ejecución externa, intents de `RunCommandService` y entorno shell.
+       - `package-management-and-store.md`: Catálogo de la tienda (`TermuxStoreActivity`), inspección en `$PREFIX/bin` y ejecución en sesión activa (`ACTION_EXECUTE_IN_CURRENT_SESSION`).
+       - `storage-access-and-file-sharing.md`: Integración SAF (`TermuxDocumentsProvider`) y receptor de compartición (`FileReceiverActivity`).
+       - `bootstrap-installation.md`: Extracción de paquetes bootstrap nativos (`libtermux-bootstrap.so`), staging atómico y symlinks de almacenamiento.
 
-2. **Scoped Context Loading & Symbol Extraction**:
-   - Read ONLY the specific subpage identified from `quickstart.md` mapping to the task to avoid context overload.
-   - **Extract Anchor Symbols**: Collect the primary classes and interfaces listed under the page's YAML `sources:` block (e.g. `TerminalEmulator`, `RunCommandService`, `TermuxSession`, `TermuxStoreActivity`, `TermuxDocumentsProvider`, `FileReceiverActivity`, `CrashHandler`, `ReportActivity`) to serve as immediate entry points for Step 2.
+2. **Lectura Focalizada y Extracción de Símbolos Ancla**:
+   - Lee **ÚNICAMENTE** la subpágina identificada desde `quickstart.md` aplicable a la tarea para no saturar tu ventana de contexto.
+   - **Extrae Símbolos Ancla**: Copia las clases e interfaces listadas en el bloque YAML `sources:` (ej. `TerminalEmulator`, `RunCommandService`, `TermuxSession`, `TermuxStoreActivity`, `TermuxDocumentsProvider`, `FileReceiverActivity`, `CrashHandler`, `TermuxInstaller`). Estos símbolos son tus puntos de entrada obligatorios para la Fase 2.
 
-3. **Authoritative Alignment**:
-   - Use OpenWiki to understand module boundaries, responsibilities, and system lifecycles. Once grounded, proceed to **Step 2 (CodeGraph)** to locate exact symbols and execution graphs.
-   - Do not manually edit generated OpenWiki pages unless explicitly instructed; the scheduled GitHub Action refreshes them.
+3. **Invariante**:
+   - No saltes directamente a lecturas masivas de código sin contextualización previa. Prohibido editar páginas de OpenWiki a menos que el usuario lo solicite expresamente.
 <!-- OPENWIKI:END -->
 
+---
+
 <!-- CODEGRAPH:START -->
-## CodeGraph (MANDATORY STEP 2 - NON-INTERACTIVE)
+## FASE 2: Navegación Estructural e Inspección Relacional (CodeGraph)
 
-In repositories where `.codegraph/` exists, CodeGraph serves as the mandatory structural navigation engine. It **MUST** always be present and executed in non-interactive mode.
+CodeGraph constituye tu motor obligatorio de navegación estructural y análisis relacional de llamadas. **DEBE** ejecutarse siempre en modo estrictamente no interactivo mediante `run_command`.
 
-1. **Automatic Installation & Resilient Initialization**:
-   - If `codegraph` command is not found in `$PATH`, the agent **MUST** immediately install it via:
+1. **Auto-recuperación e Inicialización Resiliente**:
+   - Si `run_command` retorna error 127 (`codegraph: not found`), instálalo de inmediato en el contenedor:
      ```bash
      npm install -g @colbymchenry/codegraph
      ```
-   - If CodeGraph database is uninitialized or `codegraph sync` reports `CodeGraph not initialized`, initialize non-interactively first:
+   - Si el comando reporta `CodeGraph not initialized`, inicialízalo de forma no interactiva:
      ```bash
      codegraph init -y --no-color
      ```
 
-2. **Strict Non-Interactive Execution**:
-   - All CodeGraph commands **MUST** use flags that prevent prompts, interactive TTY requirements, or ANSI formatting issues:
-     - Always pass `--no-color` (or set `CODEGRAPH_TELEMETRY=0`).
-     - Never run interactive commands or omit `-y` on initialization.
-     - For index synchronization: `codegraph sync --no-color` (or `codegraph sync -q`).
+2. **Ejecución Estrictamente No Interactiva**:
+   - En cada invocación a `run_command`, incluye siempre `--no-color`:
+     - `codegraph explore --no-color "<símbolo>"`: Inspecciona código fuente y rutas de llamadas ascendentes/descendentes.
+     - `codegraph node --no-color <símbolo>`: Consulta jerarquía de invocadores (*callers*), invocados (*callees*) y definiciones.
+     - `codegraph query --no-color "<término>"`: Búsqueda rápida de símbolos indexados.
+   - Para métodos JNI o nativos identificados en el grafo, inspecciona las fuentes C/C++ correspondientes bajo `app/src/main/cpp/`, `terminal-emulator/src/main/jni/` o `termux-shared/src/main/cpp/`.
+   - Prohibido reemplazar CodeGraph por búsquedas ciegas de texto con `grep` cuando `.codegraph/` esté presente.
 
-3. **Mandatory First-Hop Lookup via OpenWiki Anchors**:
-   - You **MUST** use CodeGraph as your primary tool before executing any `grep`, `find`, or raw file inspection (`view_file`).
-   - Feed the anchor symbols discovered in Step 1 directly into:
-     - `codegraph explore --no-color "<symbol or query>"` (shows source code + call paths).
-     - `codegraph node --no-color <symbol>` (inspects caller/callee hierarchy and definitions).
-     - `codegraph query --no-color "<search>"` (fast symbol lookup).
-   - For JNI/native methods identified in the graph, inspect the corresponding C sources under `src/main/jni/` or `src/main/cpp/`.
-   - Bypassing CodeGraph in favor of arbitrary file reading or text grepping when `.codegraph/` is present is strictly prohibited.
-
-4. **Mandatory Index Synchronization & Fallback Flow**:
-   - You **MUST** run `codegraph sync --no-color` immediately after creating, modifying, or deleting source files to preserve index freshness for downstream tasks.
-   - **Fallback Recovery**: If `codegraph sync --no-color` fails with `CodeGraph not initialized`, execute `codegraph init -y --no-color` and re-run `codegraph sync --no-color`.
+3. **Sincronización de Grafo Obligatoria**:
+   - Ejecuta `codegraph sync --no-color` inmediatamente tras crear, modificar o eliminar archivos fuente para mantener el índice al día.
 <!-- CODEGRAPH:END -->
+
+---
+
+## FASE 3: Implementación Quirúrgica con Herramientas de Edición
+
+Una vez ubicado el punto exacto de intervención mediante las Fases 1 y 2, procede a implementar la solución:
+
+1. **Uso de Herramientas Nativas**:
+   - Utiliza prioritariamente `replace_file_content` para sustituciones atómicas de bloques contiguos de código.
+   - Utiliza `multi_replace_file_content` si requieres aplicar varios cambios dispersos en un mismo archivo.
+   - Utiliza `write_to_file` únicamente para crear archivos nuevos o cuando la reescritura completa sea indispensable.
+
+2. **Regla de Lectura Previa (*Read-Before-Write*)**:
+   - Utiliza `view_file` antes de editar si desconoces el estado exacto o la indentación del bloque objetivo.
+   - Respeta estrictamente la indentación existente (espacios vs tabs) y el estilo del módulo (Java 8 / Kotlin).
+
+3. **Prohibición Total de Código Simulado (*No Mocks*)**:
+   - No implementes datos simulados estáticos, componentes ficticios ni botones sin listeners reales conectados al backend de la aplicación.
+   - Todo flujo expuesto al usuario en la interfaz debe tener su lógica funcional y trazable.
+
+4. **Blindaje de Archivos Críticos**:
+   - **NUNCA** modifiques `debug.keystore`, `debug.keystore.base64`, `testkey_untrusted.jks` ni las configuraciones de firma (`signingConfigs`, `signingConfig`) en los archivos `build.gradle`.
+   - **NUNCA** almacenes claves de API o secretos en texto plano en el repositorio.
+
+---
+
+## FASE 4: Quality Gate y Cierre de Integridad (*Definition of Done*)
+
+Ninguna tarea se considera terminada hasta haber superado secuencialmente la siguiente compuerta de verificación:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    QUALITY GATE DE CIERRE DE INTEGRIDAD                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  [COMPILACIÓN LIMPIA]      ──► compile_applet                               │
+│            │                                                                │
+│            ├── [Fallo] ──► Análisis de traza de compilador + Corrección     │
+│            ▼                                                                │
+│  [PRUEBAS UNITARIAS / JVM] ──► run_command("gradle :app:testDebugUnitTest") │
+│            │                                                                │
+│            ├── [Fallo] ──► Depuración de aserciones + Corrección            │
+│            ▼                                                                │
+│  [SINCRONIZACIÓN DE GRAFO] ──► run_command("codegraph sync --no-color")     │
+│            │                                                                │
+│            ├── [Fallo] ──► codegraph init -y --no-color && sync             │
+│            ▼                                                                │
+│  [CONSISTENCIA OPENWIKI]   ──► Verificar .page-manifest.json y .claims/     │
+│            │                                                                │
+│            ▼                                                                │
+│  [TAREA FINALIZADA EXITOSAMENTE (SUCCESS)]                                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Paso 1 - Compilación (`compile_applet`)**:
+   - Invoca la herramienta `compile_applet` para garantizar que no existan errores de sintaxis, tipos o desajustes de recursos XML. Tienes un límite de 3 iteraciones para corregir cualquier fallo.
+2. **Paso 2 - Pruebas Unitarias JVM (`run_command`)**:
+   - Ejecuta `gradle :app:testDebugUnitTest`. No se permiten regresiones en las pruebas existentes de emulador, terminal view o providers.
+3. **Paso 3 - Sincronización del Índice (`run_command`)**:
+   - Ejecuta `codegraph sync --no-color` para dejar el repositorio completamente indexado para el siguiente turno.
+4. **Paso 4 - Consistencia de OpenWiki**:
+   - Si creaste o modificaste componentes documentados en OpenWiki, actualiza la página y los archivos correspondientes en `.page-manifest.json` y `.claims/`.
+
+---
+
+## REGLAS CRÍTICAS DEL ENTORNO DE GOOGLE AI STUDIO
+
+Para operar con máxima estabilidad en este contenedor en la nube:
+
+1. **Uso de Gradle en Terminal**:
+   - **Usa SIEMPRE `gradle`**, NUNCA `./gradlew` ni `gradlew`. El Gradle Wrapper no está soportado en este entorno y fallará.
+   - **Evita `gradle clean`**: Ralentiza drásticamente las compilaciones posteriores; solo úsalo si hay corrupción irrecuperable de caché.
+2. **Sin Emulador Local ni ADB**:
+   - Este entorno **no dispone de emulador local ni de comando `adb`**.
+   - No intentes ejecutar pruebas instrumentadas (`androidTest` / Espresso). Todas las pruebas deben ser pruebas unitarias JVM locales o Robolectric.
+3. **Sincronización de Metadatos de Plataforma (`metadata.json`)**:
+   - El nombre en `metadata.json` debe coincidir exactamente con el valor de `app_name` en `res/values/strings.xml`.
+   - **NUNCA** elimines `MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API` del array `majorCapabilities` en `metadata.json`.

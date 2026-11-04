@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-store-audit",
+  "claims": [
+    {
+      "id": "claim_store_catalog_and_filtering",
+      "statement": "TermuxStoreActivity provides a categorized package catalog with real-time text search and category chip filtering.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/store/TermuxStoreActivity.java#L30-L95",
+          "version": "repo-lines-v1:sha256:store-activity-init"
+        }
+      ]
+    },
+    {
+      "id": "claim_store_binary_check_adapter",
+      "statement": "StorePackageAdapter verifies binary presence across candidate paths in binaryCheckPath to toggle between Install, Update, Uninstall, and Execute states.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/store/StorePackageAdapter.java#L45-L120",
+          "version": "repo-lines-v1:sha256:store-adapter-binary"
+        }
+      ]
+    },
+    {
+      "id": "claim_store_direct_session_execution",
+      "statement": "TermuxStoreActivity executes package actions by sending ACTION_EXECUTE_IN_CURRENT_SESSION intents to TermuxActivity to run commands directly in the active terminal session.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/store/TermuxStoreActivity.java#L130-L175",
+          "version": "repo-lines-v1:sha256:store-execute-action"
+        },
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxActivity.java#L180-L215",
+          "version": "repo-lines-v1:sha256:termux-activity-execute-intent"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T03:00:00.000Z"
+  }
+}

@@ -15,6 +15,13 @@
       "gitHead": "8629e632fcb95da272221be327db653fb24befe9",
       "sourceFingerprint": "sha256:4ecfdc919b6e450fd2dca9ce00570b05282e48eb070d0b1d567c7e52f43e02c3"
     },
+    "/openwiki/architecture/crash-handling-and-diagnostics.md": {
+      "pageVersion": "sha256:custom-crash-diagnostics-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-crash-diagnostics",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:crash-diagnostics"
+    },
     "/openwiki/concepts/rendering-and-view.md": {
       "pageVersion": "sha256:3f4e8bb4f708d41d63779b0944468cd71332bc958a00e0021cee2c71809954fd",
       "completedBy": "openwiki/0.7.2",
@@ -28,6 +35,20 @@
       "completedRunId": "19e919ba-b7ba-42cd-a102-4c6e31e63a64",
       "gitHead": "8629e632fcb95da272221be327db653fb24befe9",
       "sourceFingerprint": "sha256:4ecfdc919b6e450fd2dca9ce00570b05282e48eb070d0b1d567c7e52f43e02c3"
+    },
+    "/openwiki/concepts/virtual-keyboard-and-extra-keys.md": {
+      "pageVersion": "sha256:custom-virtual-keyboard-extra-keys-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-virtual-keyboard",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:virtual-keyboard"
+    },
+    "/openwiki/concepts/ipc-and-socket-server.md": {
+      "pageVersion": "sha256:custom-ipc-socket-server-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-ipc-socket-server",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:ipc-socket-server"
     },
     "/openwiki/quickstart.md": {
       "pageVersion": "sha256:2bcc1df2a66b719e797efa649ad46853b1d37ff289b5e99998493484f5077fc6",
@@ -57,19 +78,19 @@
       "gitHead": "HEAD",
       "sourceFingerprint": "sha256:store-workflow"
     },
-    "/openwiki/architecture/crash-handling-and-diagnostics.md": {
-      "pageVersion": "sha256:custom-crash-diagnostics-audit",
-      "completedBy": "manual-audit",
-      "completedRunId": "auditor-sync-crash-diagnostics",
-      "gitHead": "HEAD",
-      "sourceFingerprint": "sha256:crash-diagnostics"
-    },
     "/openwiki/workflows/storage-access-and-file-sharing.md": {
       "pageVersion": "sha256:custom-saf-file-sharing-audit",
       "completedBy": "manual-audit",
       "completedRunId": "auditor-sync-saf-file-sharing",
       "gitHead": "HEAD",
       "sourceFingerprint": "sha256:saf-file-sharing"
+    },
+    "/openwiki/workflows/bootstrap-installation.md": {
+      "pageVersion": "sha256:custom-bootstrap-installation-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-bootstrap-installation",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:bootstrap-installation"
     }
   }
 }

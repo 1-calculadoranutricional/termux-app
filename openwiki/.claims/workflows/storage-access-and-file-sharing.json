@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-saf-file-sharing-audit",
+  "claims": [
+    {
+      "id": "claim_saf_documents_provider_roots",
+      "statement": "TermuxDocumentsProvider implements Android Storage Access Framework to securely expose the Termux HOME directory to external document pickers.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/filepicker/TermuxDocumentsProvider.java#L40-L110",
+          "version": "repo-lines-v1:sha256:saf-provider-roots"
+        }
+      ]
+    },
+    {
+      "id": "claim_file_receiver_action_send",
+      "statement": "FileReceiverActivity handles ACTION_SEND and ACTION_SEND_MULTIPLE intents to route incoming shared files to ~/downloads, URLs to termux-url-opener, or scripts to termux-file-editor.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/api/file/FileReceiverActivity.java#L30-L100",
+          "version": "repo-lines-v1:sha256:file-receiver-send"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T03:00:00.000Z"
+  }
+}
