@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-settings-preferences-audit",
+  "claims": [
+    {
+      "id": "claim_dual_configuration_model",
+      "statement": "Termux combines Android SharedPreferences for UI framework settings with file-based termux.properties for terminal emulation and key modifier configurations.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/termux/settings/preferences/TermuxAppSharedPreferences.java#L18-L85",
+          "version": "repo-lines-v1:sha256:shared-preferences-impl"
+        },
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/termux/settings/properties/TermuxAppSharedProperties.java#L14-L42",
+          "version": "repo-lines-v1:sha256:shared-properties-impl"
+        }
+      ]
+    },
+    {
+      "id": "claim_live_reload_styling_broadcast",
+      "statement": "TermuxActivity listens for ACTION_RELOAD_STYLE broadcasts to reload termux.properties and apply styling changes in place without requiring process restart.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxActivity.java#L980-L1065",
+          "version": "repo-lines-v1:sha256:termux-activity-reload-styling"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T07:10:00.000Z"
+  }
+}

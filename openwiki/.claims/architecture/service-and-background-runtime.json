@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-service-background-runtime-audit",
+  "claims": [
+    {
+      "id": "claim_service_foreground_lifecycle",
+      "statement": "TermuxService operates as an Android foreground service with a persistent notification to prevent process termination and maintain background shell sessions.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxService.java#L110-L150",
+          "version": "repo-lines-v1:sha256:termux-service-foreground-lifecycle"
+        }
+      ]
+    },
+    {
+      "id": "claim_service_dual_client_decoupling",
+      "statement": "TermuxService implements dual client session management, switching between TermuxTerminalSessionActivityClient and TermuxTerminalSessionServiceClient when TermuxActivity is created or destroyed.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxService.java#L80-L95",
+          "version": "repo-lines-v1:sha256:termux-service-dual-client"
+        }
+      ]
+    },
+    {
+      "id": "claim_service_wakelock_and_actions",
+      "statement": "TermuxService exposes notification action intents to stop the service, acquire, and release PowerManager.WakeLock and WifiManager.WifiLock instances.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxService.java#L210-L260",
+          "version": "repo-lines-v1:sha256:termux-service-wakelock-actions"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T07:10:00.000Z"
+  }
+}

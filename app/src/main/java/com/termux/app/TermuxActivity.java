@@ -936,19 +936,25 @@ public final class TermuxActivity extends AppCompatActivity implements ServiceCo
         }
         if (session != null) {
             final TerminalSession finalSession = session;
-            final String toSend = command.endsWith("\n") || command.endsWith("\r") ? command : (command + "\n");
-            if (finalSession.isRunning()) {
-                finalSession.write(toSend);
-                if (mTerminalView != null) {
-                    mTerminalView.onScreenUpdated();
-                }
-            } else if (mTerminalView != null) {
-                mTerminalView.postDelayed(() -> {
-                    if (finalSession.isRunning()) {
-                        finalSession.write(toSend);
+            final String cleanCommand = command.replaceAll("[\r\n]+$", "");
+            Runnable injectRunnable = () -> {
+                if (finalSession.isRunning()) {
+                    if (finalSession.getEmulator() != null) {
+                        finalSession.getEmulator().paste(cleanCommand);
+                        finalSession.write("\r");
+                    } else {
+                        finalSession.write(cleanCommand + "\n");
+                    }
+                    if (mTerminalView != null) {
                         mTerminalView.onScreenUpdated();
                     }
-                }, 300);
+                }
+            };
+
+            if (finalSession.isRunning()) {
+                injectRunnable.run();
+            } else if (mTerminalView != null) {
+                mTerminalView.postDelayed(injectRunnable, 300);
             }
         }
     }

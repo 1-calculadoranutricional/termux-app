@@ -112,8 +112,9 @@ Unlike legacy approaches that created temporary `.sh` shell scripts or opened se
    startActivity(termuxIntent);
    ```
 3. `FLAG_ACTIVITY_REORDER_TO_FRONT` brings the existing `TermuxActivity` directly to the foreground without recreating it.
-4. `TermuxActivity.onNewIntent(Intent)` receives `ACTION_EXECUTE_IN_CURRENT_SESSION`, extracts `EXTRA_COMMAND`, and writes it followed by a carriage return (`\r`) directly into the active `TerminalSession`.
-5. The command runs interactively in the current terminal prompt, allowing users to watch installation progress and respond to interactive prompts (such as `[Y/n]` confirmations).
+4. `TermuxActivity.onNewIntent(Intent)` receives `ACTION_EXECUTE_IN_CURRENT_SESSION`, extracts `EXTRA_COMMAND`, and dispatches it via `executeCommandInCurrentSession()`.
+5. Instead of fragmenting multiline strings with raw `write()`, `executeCommandInCurrentSession()` uses `TerminalEmulator.paste()` (utilizing DECSET 2004 Bracketed Paste Mode when active) followed by an atomic carriage return (`\r`), executing the entire composite command as a single paste block.
+6. The command runs interactively in the current terminal prompt, allowing users to watch installation progress and respond to interactive prompts (such as `[Y/n]` confirmations).
 
 ---
 

@@ -91,6 +91,27 @@
       "completedRunId": "auditor-sync-bootstrap-installation",
       "gitHead": "HEAD",
       "sourceFingerprint": "sha256:bootstrap-installation"
+    },
+    "/openwiki/concepts/native-jni-and-pty.md": {
+      "pageVersion": "sha256:custom-native-jni-pty-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-native-jni-pty",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:native-jni-pty"
+    },
+    "/openwiki/architecture/service-and-background-runtime.md": {
+      "pageVersion": "sha256:custom-service-background-runtime-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-service-runtime",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:service-runtime"
+    },
+    "/openwiki/concepts/settings-and-preferences.md": {
+      "pageVersion": "sha256:custom-settings-preferences-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-settings-preferences",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:settings-preferences"
     }
   }
 }

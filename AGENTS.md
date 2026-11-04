@@ -1,6 +1,6 @@
 # Protocolo Operativo para el Agente de Google AI Studio (AGENTS.md)
 
-Este documento define el protocolo operativo de desarrollo, navegación, edición y verificación de código para el **agente de software de Google AI Studio** en este repositorio. Cada directriz está directamente mapeada a las herramientas nativas y al entorno de ejecución en la nube.
+Este documento define el manual operativo, de navegación, edición y verificación de código para ti como **agente de software de Google AI Studio** en este repositorio. Cada directriz está directamente mapeada a tus herramientas nativas y al entorno de ejecución en la nube.
 
 ---
 
@@ -15,25 +15,28 @@ Antes de inspeccionar código fuente o utilizar herramientas de búsqueda, **DEB
      - **Arquitectura (`openwiki/architecture/`)**:
        - `overview.md`: Topología de componentes, procesos, servicios (`TermuxService`) y fronteras de seguridad.
        - `modules-and-dependencies.md`: Estructura multi-módulo Gradle y resolución de dependencias.
+       - `service-and-background-runtime.md`: Arquitectura de `TermuxService`, ejecuciones en segundo plano, wakelocks y notificaciones.
        - `crash-handling-and-diagnostics.md`: Intercepción de excepciones (`CrashHandler`), telemetría forense y visor Markwon (`ReportActivity`).
      - **Conceptos (`openwiki/concepts/`)**:
        - `terminal-emulation.md`: Motor DEC VT/ANSI, buffers de pantalla (`TerminalBuffer`, `TerminalRow`) y anchos Unicode (`WcWidth`).
-       - `rendering-and-view.md`: Renderizado en `Canvas` (`TerminalView`, `TerminalRenderer`), gestos táctiles y selección de texto.
+       - `native-jni-and-pty.md`: Capa C/C++ nativa (`termux.c`), asignación de PTY master/slave (`/dev/ptmx`), termios `IUTF8` y credenciales `SO_PEERCRED`.
+       - `rendering-and-view.md`: Renderizado en `Canvas` (`TerminalView`, `TerminalRenderer`), gestos táctiles, selección de texto e inyección de contenido Gboard.
        - `virtual-keyboard-and-extra-keys.md`: Barra virtual de teclas (`ExtraKeysView`), modificadores (`SpecialButton`), gestos y matrices de `termux.properties`.
+       - `settings-and-preferences.md`: Arquitectura dual de configuración (`TermuxAppSharedPreferences` vs `termux.properties` dotfile) y recarga de estilos en caliente.
        - `ipc-and-socket-server.md`: Servidor socket `AF_UNIX` local (`AmSocketServer`), autenticación por `SO_PEERCRED` y despacho de intents `am`.
      - **Flujos de Trabajo (`openwiki/workflows/`)**:
        - `session-lifecycle.md`: Ciclo de vida de terminal sessions, procesos PTY y vinculación con `TermuxService`.
        - `command-execution.md`: Ejecución externa, intents de `RunCommandService` y entorno shell.
-       - `package-management-and-store.md`: Catálogo de la tienda (`TermuxStoreActivity`), inspección en `$PREFIX/bin` y ejecución en sesión activa (`ACTION_EXECUTE_IN_CURRENT_SESSION`).
+       - `package-management-and-store.md`: Catálogo de la tienda (`TermuxStoreActivity`), inyección atómica Bracketed Paste y ejecución en sesión activa (`ACTION_EXECUTE_IN_CURRENT_SESSION`).
        - `storage-access-and-file-sharing.md`: Integración SAF (`TermuxDocumentsProvider`) y receptor de compartición (`FileReceiverActivity`).
        - `bootstrap-installation.md`: Extracción de paquetes bootstrap nativos (`libtermux-bootstrap.so`), staging atómico y symlinks de almacenamiento.
 
 2. **Lectura Focalizada y Extracción de Símbolos Ancla**:
-   - Lee **ÚNICAMENTE** la subpágina identificada desde `quickstart.md` aplicable a la tarea para no saturar tu ventana de contexto.
-   - **Extrae Símbolos Ancla**: Copia las clases e interfaces listadas en el bloque YAML `sources:` (ej. `TerminalEmulator`, `RunCommandService`, `TermuxSession`, `TermuxStoreActivity`, `TermuxDocumentsProvider`, `FileReceiverActivity`, `CrashHandler`, `TermuxInstaller`). Estos símbolos son tus puntos de entrada obligatorios para la Fase 2.
+   - Usa `view_file` para leer **ÚNICAMENTE** la subpágina identificada desde `quickstart.md` aplicable a la tarea para no saturar tu ventana de contexto.
+   - **Extrae Símbolos Ancla**: Identifica las clases e interfaces listadas en el bloque YAML `sources:` (ej. `TerminalEmulator`, `RunCommandService`, `TermuxSession`, `TermuxStoreActivity`, `TermuxService`, `JNI`, `CrashHandler`). Estos símbolos son tus puntos de entrada obligatorios para la Fase 2.
 
 3. **Invariante**:
-   - No saltes directamente a lecturas masivas de código sin contextualización previa. Prohibido editar páginas de OpenWiki a menos que el usuario lo solicite expresamente.
+   - No saltes directamente a lecturas masivas de código sin contextualización previa. Prohibido editar páginas de OpenWiki a menos que la tarea implique documentar o actualizar la arquitectura del proyecto.
 <!-- OPENWIKI:END -->
 
 ---
@@ -41,7 +44,7 @@ Antes de inspeccionar código fuente o utilizar herramientas de búsqueda, **DEB
 <!-- CODEGRAPH:START -->
 ## FASE 2: Navegación Estructural e Inspección Relacional (CodeGraph)
 
-CodeGraph constituye tu motor obligatorio de navegación estructural y análisis relacional de llamadas. **DEBE** ejecutarse siempre en modo estrictamente no interactivo mediante `run_command`.
+CodeGraph constituye tu motor obligatorio de navegación estructural y análisis relacional de llamadas. **DEBES** ejecutarlo siempre en modo estrictamente no interactivo mediante `run_command`.
 
 1. **Auto-recuperación e Inicialización Resiliente**:
    - Si `run_command` retorna error 127 (`codegraph: not found`), instálalo de inmediato en el contenedor:
@@ -67,11 +70,11 @@ CodeGraph constituye tu motor obligatorio de navegación estructural y análisis
 
 ---
 
-## FASE 3: Implementación Quirúrgica con Herramientas de Edición
+## FASE 3: Implementación Quirúrgica con Herramientas Nativas
 
 Una vez ubicado el punto exacto de intervención mediante las Fases 1 y 2, procede a implementar la solución:
 
-1. **Uso de Herramientas Nativas**:
+1. **Uso de Herramientas Nativas de Edición**:
    - Utiliza prioritariamente `replace_file_content` para sustituciones atómicas de bloques contiguos de código.
    - Utiliza `multi_replace_file_content` si requieres aplicar varios cambios dispersos en un mismo archivo.
    - Utiliza `write_to_file` únicamente para crear archivos nuevos o cuando la reescritura completa sea indispensable.
