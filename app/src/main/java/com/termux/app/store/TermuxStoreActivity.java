@@ -725,7 +725,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "alias Cat=\"cat\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
-            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n" +
+            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n" +
+            "alias Lazygit=\"lazygit\"\n\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# File Manager Integration (Yazi) & Keybindings\n" +
             "# ------------------------------------------------------------------------------\n" +
@@ -804,7 +805,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "alias Cat=\"cat\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
-            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n" +
+            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n" +
+            "alias Lazygit=\"lazygit\"\n\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# File Manager Integration (Yazi) & Keybindings\n" +
             "# ------------------------------------------------------------------------------\n" +
