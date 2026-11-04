@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:custom-native-jni-pty-audit",
+  "claims": [
+    {
+      "id": "claim_native_create_subprocess",
+      "statement": "JNI.createSubprocess invokes native C code in termux.c to open /dev/ptmx, configure termios UTF-8 and flow control, fork, set controlling terminal, and execvp the shell.",
+      "evidence": [
+        {
+          "resource": "repo://terminal-emulator/src/main/jni/termux.c#L25-L105",
+          "version": "repo-lines-v1:sha256:termux-c-create-subprocess"
+        },
+        {
+          "resource": "repo://terminal-emulator/src/main/java/com/termux/terminal/JNI.java#L26-L27",
+          "version": "repo-lines-v1:sha256:jni-create-subprocess"
+        }
+      ]
+    },
+    {
+      "id": "claim_native_window_size_and_wait",
+      "statement": "JNI provides setPtyWindowSize to signal terminal viewport dimensions via TIOCSWINSZ ioctl and waitFor to observe process termination via waitpid.",
+      "evidence": [
+        {
+          "resource": "repo://terminal-emulator/src/main/jni/termux.c#L180-L215",
+          "version": "repo-lines-v1:sha256:termux-c-window-size-wait"
+        }
+      ]
+    },
+    {
+      "id": "claim_native_peer_credentials",
+      "statement": "local-socket.cpp inspects client PID, UID, and GID through SO_PEERCRED socket options to ensure secure AF_UNIX communication in AmSocketServer.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/cpp/local-socket.cpp#L70-L115",
+          "version": "repo-lines-v1:sha256:local-socket-get-peer-cred"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T07:10:00.000Z"
+  }
+}

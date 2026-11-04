@@ -25,12 +25,15 @@ Use this guide to navigate across the major domains of the Termux App codebase. 
 ### Architecture & Modules
 - **[System Architecture Overview](architecture/overview.md)**: High-level system architecture, component topology, process/service structure, and security boundaries.
 - **[Modules and Dependencies](architecture/modules-and-dependencies.md)**: Breakdown of Gradle modules (`:app`, `:terminal-emulator`, `:terminal-view`, `:termux-shared`), inter-module dependencies, and library integration.
+- **[TermuxService & Background Runtime Architecture](architecture/service-and-background-runtime.md)**: Foreground service lifecycle, headless multi-client session management, wakelocks, and persistent notification actions.
 - **[Crash Handling & Diagnostics](architecture/crash-handling-and-diagnostics.md)**: Uncaught exception handling (`CrashHandler`), forensic telemetry (`TermuxCrashUtils`), notification alerts, and Markwon-powered markdown reports (`ReportActivity`).
 
 ### Core Emulation & UI Concepts
 - **[Terminal Emulation Engine](concepts/terminal-emulation.md)**: DEC VT/ANSI escape sequence processing, screen buffer management (`TerminalBuffer`, `TerminalRow`), color schemes, and screen text handling.
+- **[Native JNI & Pseudoterminal (PTY) Subsystem](concepts/native-jni-and-pty.md)**: Native C PTY allocation (`/dev/ptmx`), termios input mode configuration, JNI bridges (`termux.c`), and `SO_PEERCRED` local socket security.
 - **[Terminal View & Rendering](concepts/rendering-and-view.md)**: UI rendering pipeline in `TerminalView`, touch gesture translation, scrolling, font metrics, text selection, and rich clipboard content resolution.
 - **[Virtual Keyboard & Extra Keys Toolbar](concepts/virtual-keyboard-and-extra-keys.md)**: On-screen extra keys bar (`ExtraKeysView`), modifier state machine (Ctrl, Alt, Fn), swipe macros, and `termux.properties` key mapping.
+- **[Settings & Properties Architecture](concepts/settings-and-preferences.md)**: Dual-tier configuration model (`TermuxAppSharedPreferences` GUI vs `termux.properties` dotfile) and live styling reload pipeline (`ACTION_RELOAD_STYLE`).
 - **[Subprocess IPC & Android Manager Socket Server](concepts/ipc-and-socket-server.md)**: Native `AF_UNIX` domain socket server (`AmSocketServer`), `SO_PEERCRED` security verification, and high-performance `am` intent execution.
 
 ### Workflows & Execution

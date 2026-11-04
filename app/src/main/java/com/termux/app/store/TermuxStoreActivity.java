@@ -667,12 +667,12 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "Herramientas • Shell Avanzada",
             "Shell Zsh avanzada con Powerlevel10k, autocompletado y resaltado de sintaxis.",
             R.drawable.ic_pkg_terminal,
-            "pkg install zsh -y\n" +
-            "rm -rf ~/.zsh ~/.zshrc\n" +
-            "mkdir -p ~/.zsh/plugins ~/.zsh/themes\n" +
-            "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zsh/themes/powerlevel10k\n" +
-            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/plugins/zsh-syntax-highlighting\n" +
-            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/plugins/zsh-autosuggestions\n" +
+            "pkg install zsh -y && " +
+            "rm -rf ~/.zsh ~/.zshrc && " +
+            "mkdir -p ~/.zsh/plugins ~/.zsh/themes && " +
+            "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zsh/themes/powerlevel10k && " +
+            "git clone --depth=1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/plugins/zsh-syntax-highlighting && " +
+            "git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/plugins/zsh-autosuggestions && " +
             "cat << 'EOF' > ~/.zshrc\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# Powerlevel10k Instant Prompt\n" +
@@ -725,7 +725,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "alias Cat=\"cat\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
-            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n" +
+            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n" +
+            "alias Lazygit=\"lazygit\"\n\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# File Manager Integration (Yazi) & Keybindings\n" +
             "# ------------------------------------------------------------------------------\n" +
@@ -750,8 +751,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "export CLOUD_CODE_URL=\"http://127.0.0.1:8086\"\n" +
             "export MODEL_GOOGLE_JARVIS_PROXY=\"http://127.0.0.1:8086\"\n" +
             "EOF\n" +
-            "chsh -s zsh\n" +
-            "exec zsh",
+            "chsh -s zsh && exec zsh",
             "pkg uninstall zsh -y",
             "cat << 'EOF' > ~/.zshrc\n" +
             "# ------------------------------------------------------------------------------\n" +
@@ -805,7 +805,8 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "alias Cat=\"cat\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Agy-proxy=\"node ~/antigravity-proxy.mjs\"\n" +
-            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n\n" +
+            "alias Agy=\"agy --model gemini-3.8-flash-low --dangerously-skip-permissions 2>/dev/null\"\n" +
+            "alias Lazygit=\"lazygit\"\n\n" +
             "# ------------------------------------------------------------------------------\n" +
             "# File Manager Integration (Yazi) & Keybindings\n" +
             "# ------------------------------------------------------------------------------\n" +
@@ -830,8 +831,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "export CLOUD_CODE_URL=\"http://127.0.0.1:8086\"\n" +
             "export MODEL_GOOGLE_JARVIS_PROXY=\"http://127.0.0.1:8086\"\n" +
             "EOF\n" +
-            "chsh -s zsh\n" +
-            "exec zsh",
+            "chsh -s zsh && exec zsh",
             TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/zsh",
             "4.9 ★",
             "20 MB",
@@ -956,7 +956,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "Google • Agente IA Avanzado",
             "Agente inteligente oficial de Google para desarrollo de software avanzado, pairing y automatización completa.",
             R.drawable.ic_pkg_antigravity,
-            "curl -fsSL https://antigravity.google/cli/install.sh | bash\n" +
+            "curl -fsSL https://antigravity.google/cli/install.sh | bash && " +
             "echo 'export PATH=\"/data/data/com.termux/files/home/.local/bin:$PATH\"' >> ~/.zshrc && source ~/.zshrc",
             "rm -rf ~/.gemini/antigravity-cli ~/.local/bin/agy",
             "curl -fsSL https://antigravity.google/cli/install.sh | bash",
@@ -976,7 +976,7 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "Google • Asistente de IA",
             "Línea de comandos oficial de Google Gemini para interactuar con modelos de IA, generación de código y automatización multimodal.",
             R.drawable.ic_pkg_gemini,
-            "command -v npm >/dev/null 2>&1 || pkg install -y nodejs-lts\n" +
+            "(command -v npm >/dev/null 2>&1 || pkg install -y nodejs-lts) && " +
             "npm install -g --allow-scripts=node-pty,@github/keytar @google/gemini-cli",
             "npm uninstall -g @google/gemini-cli",
             "npm install -g --allow-scripts=node-pty,@github/keytar @google/gemini-cli",

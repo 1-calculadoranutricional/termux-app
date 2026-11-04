@@ -142,7 +142,7 @@ sequenceDiagram
        - `/storage/emulated/0/Download/...` → `~/storage/downloads/...`
        - Shared storage fallback → `~/storage/shared/...`
      - *Stream Ingestion & Screenshot Saving (`saveContentStreamToFile`)*: If the content URI is a transient stream or inaccessible directly by path, the input stream is saved to `~/storage/dcim/Screenshots/Screenshot_YYYYMMDD_HHmmss.<ext>` (with automatic fallback to `~/clipboard/` if DCIM is unwritable).
-     - *Terminal Path Injection*: The resulting canonical absolute file path is escaped for POSIX shells (`'...'` wrapping) and pasted directly into the active `TerminalSession` via `mEmulator.paste(escapedPath)`, allowing commands (e.g. `cat`, `view`, `cp`, Python scripts) to immediately process the image.
+     - *Terminal Path Injection*: The resulting canonical absolute file path is injected directly into the active `TerminalSession` without enclosing quotes via `session.write(resolvedPath)`, allowing commands (e.g. `cat`, `view`, `cp`, Python scripts) to immediately process the image.
 
 
 ---

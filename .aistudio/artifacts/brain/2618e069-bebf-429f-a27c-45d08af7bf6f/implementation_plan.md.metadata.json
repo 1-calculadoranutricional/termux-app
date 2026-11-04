@@ -1,0 +1,6 @@
+{
+  "summary": "Plan maestro de auditoría técnica y documentación exhaustiva según el estándar OpenWiki: cubre los subsistemas omitidos con cobertura cero (Capa Nativa JNI/PTY, TermuxService y Arquitectura Dual de Preferencias/Properties), sincroniza documentos existentes con desviaciones (Bracketed Paste y Gboard IME), actualiza claims en .claims/, registra el manifiesto en .page-manifest.json y ejecuta el Quality Gate (compile_applet, pruebas unitarias y codegraph sync).",
+  "updatedAt": "2026-11-04T07:06:56.230790943Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
