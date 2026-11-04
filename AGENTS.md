@@ -8,11 +8,11 @@ In repositories with an `openwiki/` directory, you **MUST** ground your conceptu
    - The repository is organized into three major areas across 4 modules (`:app`, `:termux-shared`, `:terminal-view`, `:terminal-emulator`):
      - **Architecture**: `openwiki/architecture/overview.md` (topology & services) and `modules-and-dependencies.md` (multi-module Gradle structure).
      - **Concepts**: `openwiki/concepts/terminal-emulation.md` (VT/ANSI engine) and `rendering-and-view.md` (terminal view & touch pipelines).
-     - **Workflows**: `openwiki/workflows/session-lifecycle.md` (session creation & execution) and `command-execution.md` (RunCommandService & intent APIs).
+     - **Workflows**: `openwiki/workflows/session-lifecycle.md` (session creation & execution), `command-execution.md` (RunCommandService & intent APIs), and `package-management-and-store.md` (Termux Store & package lifecycle).
 
 2. **Scoped Context Loading & Symbol Extraction**:
    - Read ONLY the specific subpage identified from `quickstart.md` mapping to the task to avoid context overload.
-   - **Extract Anchor Symbols**: Collect the primary classes and interfaces listed under the page's YAML `sources:` block (e.g. `TerminalEmulator`, `RunCommandService`, `TermuxSession`) to serve as immediate entry points for Step 2.
+   - **Extract Anchor Symbols**: Collect the primary classes and interfaces listed under the page's YAML `sources:` block (e.g. `TerminalEmulator`, `RunCommandService`, `TermuxSession`, `TermuxStoreActivity`) to serve as immediate entry points for Step 2.
 
 3. **Authoritative Alignment**:
    - Use OpenWiki to understand module boundaries, responsibilities, and system lifecycles. Once grounded, proceed to **Step 2 (CodeGraph)** to locate exact symbols and execution graphs.

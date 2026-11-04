@@ -27,6 +27,7 @@ The application runs primarily within a single Android process, managed by `Term
 ```mermaid
 sequenceDiagram
     participant App as TermuxApplication
+    participant Store as TermuxStoreActivity
     participant Act as TermuxActivity
     participant Svc as TermuxService
     participant Shell as TermuxShellManager
@@ -39,6 +40,9 @@ sequenceDiagram
     Shell->>Term: Spawn terminal execution / PTY session
     Term-->>Act: Output stream / TerminalView rendering
     Note over Act,Svc: TermuxService runs as Foreground Service with persistent notification
+
+    Store->>Act: Intent(ACTION_EXECUTE_IN_CURRENT_SESSION, EXTRA_COMMAND)
+    Act->>Term: Write command + \r to active session
 ```
 
 ## Core Component Responsibilities
@@ -70,7 +74,7 @@ sequenceDiagram
   - Handles Activity lifecycle transitions (`onResume`, `onStop`, `onDestroy`) ensuring clean disconnection of activity-bound terminal session clients when UI goes out of visibility.
 
 ### 4. Auxiliary Activities, Broadcast Receivers & Integration Components
-- **`TermuxStoreActivity` (`com.termux.app.store.TermuxStoreActivity`)**: An interactive package and tools manager (Play Store style UI) allowing users to discover, install, launch, or configure curated CLI packages (e.g., nodejs, python, git, yazi, neovim) and tools. It integrates directly with `TermuxService` via execution commands to install packages silently or in interactive terminal sessions.
+- **`TermuxStoreActivity` (`com.termux.app.store.TermuxStoreActivity`)**: An interactive package and tools manager (Play Store style UI) allowing users to discover, install, launch, or configure curated CLI packages (e.g., nodejs, python, git, lazygit, yazi, neovim) and tools. It checks binary presence in `$PREFIX/bin/` to display installation state and dispatches execution commands directly to the active terminal session via `TermuxActivity.ACTION_EXECUTE_IN_CURRENT_SESSION` (with specialized shell script provisioning like `setup_zsh.sh`). See **[Termux Store & Package Management Workflow](../workflows/package-management-and-store.md)** for details.
 - **`SettingsActivity` (`com.termux.app.activities.SettingsActivity`)**: Manages application preferences (terminal styling, font size, terminal bell, soft keyboard behaviors) and navigates to the store and report screens.
 - **`HelpActivity` (`com.termux.app.activities.HelpActivity`)**: Displays embedded help documentation and user guides.
 - **`SystemEventReceiver`**: Manages system broadcast registrations (e.g., package updates, boot completion).

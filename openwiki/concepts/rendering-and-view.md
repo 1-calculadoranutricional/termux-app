@@ -79,10 +79,60 @@ When terminal applications activate mouse tracking (e.g., `xterm` mouse reportin
 
 ## Keyboard, IME, & Hardware Keys
 
-`TerminalView` implements full keyboard handling:
-- **`onCreateInputConnection`**: Returns a custom `InputConnection` supporting software keyboards, IMEs, composing text, committing text, and character deletion (handling combining accents and surrogate pairs).
+`TerminalView` implements keyboard and IME handling bridging Android's text input framework with POSIX terminal semantics:
+
+- **`onCreateInputConnection(EditorInfo)`**: Configures a customized `BaseInputConnection` wrapped with `InputConnectionCompat` supporting rich media (`contentMimeTypes` for images/GIFs), multiline text input (`TYPE_CLASS_TEXT | TYPE_TEXT_FLAG_MULTI_LINE | TYPE_TEXT_FLAG_CAP_SENTENCES`), and fullscreen prevention (`IME_FLAG_NO_FULLSCREEN | IME_FLAG_NO_EXTRACT_UI`).
 - **`onKeyDown` / `onKeyUp`**: Maps hardware keyboard `KeyEvent` objects through `KeyHandler` and `TerminalEmulator` to generate correct escape sequences or character inputs.
 - **Key Logging**: Optional debug logging controlled by `setIsTerminalViewKeyLoggingEnabled`.
+
+### InputConnection Architecture & Word Buffering
+
+Modern software keyboards (such as Gboard, SwiftKey, and Samsung Keyboard) rely on cursor context inspection (`getTextBeforeCursor`) to provide autocomplete, spell check, and gesture typing. Standard terminals do not maintain a graphical text buffer in the Android View sense. To resolve this impedance mismatch, `TerminalView` manages an internal word tracking state:
+
+```mermaid
+sequenceDiagram
+    participant IME as Software Keyboard (Gboard)
+    participant IC as TerminalView InputConnection
+    participant Buf as mActiveWordBuffer
+    participant Term as TerminalSession / TerminalEmulator
+
+    IME->>IC: getTextBeforeCursor(n, flags)
+    IC->>Buf: Query last n characters
+    Buf-->>IME: Return active word context
+
+    alt Solitary Newline (Enter Key)
+        IME->>IC: commitText("\n", 1)
+        IC->>Term: sendTextToTerminal("\r") [Execute Command]
+        IC->>Buf: Clear buffer
+    else Multiline Clipboard Block
+        IME->>IC: commitText("multiline\ntext", 1)
+        IC->>Term: mEmulator.paste(str) [DECSET 2004 Bracketed Paste]
+        IC->>Buf: Clear buffer
+    else Regular Composed Word
+        IME->>IC: commitText("text", 1)
+        IC->>Term: sendTextToTerminal("text")
+        IC->>Buf: appendToBuffer("text")
+    end
+```
+*Flow of IME input events, buffer maintenance, and terminal dispatch.*
+
+#### Core InputConnection Mechanisms:
+1. **Active Word Buffer (`mActiveWordBuffer`)**:
+   - A `StringBuilder` buffer maintaining currently typed tokens up to 512 characters (trimmed to 256 on overflow).
+   - Reset on solitary newlines (`\n`, `\r`) or `KEYCODE_ENTER`.
+   - Updated dynamically on `appendToBuffer(CharSequence)` and `removeFromBuffer(int)`.
+2. **Context Inspection (`getTextBeforeCursor`)**:
+   - Returns the trailing characters from `mActiveWordBuffer`. This informs Gboard of the current word being composed and prevents duplicated words (e.g. typing `"Hola "` avoiding `"HlaHola Hola"` regressions).
+3. **Autocorrect Synchronization (`commitCorrection`)**:
+   - Android IMEs send `commitCorrection(CorrectionInfo)` as an informational notice while executing the substitution through `deleteSurroundingText` or `commitText`. `TerminalView` ignores redundant character re-emission in `commitCorrection`, preventing duplicate insertions.
+4. **Command Execution vs. Bracketed Paste (`commitText` & `finishComposingText`)**:
+   - **Solitary Newlines (`\n`, `\r`, `\r\n`)**: Treated as pressing the Enter key. Dispatches a carriage return (`\r`) directly via `sendTextToTerminal("\r")` to execute commands immediately in the interactive shell.
+   - **Multiline Text Blocks**: Strings containing embedded line breaks (such as text pasted from the Gboard clipboard strip) are intercepted and routed through `mEmulator.paste(str)`. This triggers DECSET 2004 bracketed paste mode (`\033[200~` ... `\033[201~`), ensuring shells (Zsh, Bash, Fish) do not prematurely execute lines or corrupt the command prompt.
+5. **Surrounding Text Deletion (`deleteSurroundingText`)**:
+   - Translates deletion lengths to terminal backspaces (`\u007F` or `KeyHandler.getCode(KEYCODE_DEL)`) and forward deletes (`\033[3~` or `KeyHandler.getCode(KEYCODE_FORWARD_DEL)`), while keeping `mActiveWordBuffer` synchronized.
+6. **Rich Content (`commitContent`)**:
+   - Implements `InputConnectionCompat.OnCommitContentListener` to accept image payloads (PNG, JPEG, GIF, WebP) from keyboard clipboards with automatic URI permission grants (`INPUT_CONTENT_GRANT_READ_URI_PERMISSION`).
+
 
 ---
 

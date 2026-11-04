@@ -33,6 +33,7 @@ Use this guide to navigate across the major domains of the Termux App codebase. 
 ### Workflows & Execution
 - **[Terminal Session Lifecycle](workflows/session-lifecycle.md)**: End-to-end flow of terminal session creation (`TerminalSession`), process execution via `TermuxTerminalSessionClient`, background execution, and destruction.
 - **[Command Execution Workflow](workflows/command-execution.md)**: External command execution, `RunCommandService` intent handling, broadcast receivers, and shell integration.
+- **[Termux Store & Package Management](workflows/package-management-and-store.md)**: Curated package catalog discovery, binary presence checks, terminal session execution dispatch, and shell script provisioning.
 
 ---
 

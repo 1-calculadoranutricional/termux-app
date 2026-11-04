@@ -632,6 +632,25 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "gh --help",
             null
         ));
+
+        // 3.7 Lazygit
+        mAllPackages.add(new StorePackageItem(
+            "lazygit",
+            "Lazygit",
+            "desarrollo",
+            "Desarrollo • Terminal Git UI",
+            "Interfaz de usuario de terminal simple y rápida para comandos Git con navegación visual de ramas y commits.",
+            R.drawable.ic_pkg_git,
+            "pkg install lazygit -y",
+            "pkg uninstall lazygit -y",
+            "pkg install lazygit -y",
+            TermuxConstants.TERMUX_BIN_PREFIX_DIR_PATH + "/lazygit",
+            "4.9 ★",
+            "15 MB",
+            "lazygit",
+            "lazygit --help",
+            null
+        ));
     }
 
     private void initToolsPackages() {
@@ -1101,38 +1120,18 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
 
         String commandToSend = shellCommand.trim();
 
-        // Únicamente a zsh lo ejecutamos mediante un script .sh
-        if ("zsh".equals(item.getId()) && !isUninstall) {
-            boolean scriptWritten = false;
+        // Si existe un archivo setup_zsh.sh residual previo, lo eliminamos
+        if ("zsh".equals(item.getId())) {
             try {
-                File homeDir = new File(TermuxConstants.TERMUX_HOME_DIR_PATH);
-                if (!homeDir.exists()) homeDir.mkdirs();
-                File scriptFile = new File(homeDir, "setup_zsh.sh");
-                String scriptContent = "#!/data/data/com.termux/files/usr/bin/bash\n" +
-                    shellCommand.trim() + "\n";
-                try (FileOutputStream fos = new FileOutputStream(scriptFile)) {
-                    fos.write(scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                File homeScript = new File(TermuxConstants.TERMUX_HOME_DIR_PATH, "setup_zsh.sh");
+                if (homeScript.exists()) {
+                    homeScript.delete();
                 }
-                scriptFile.setExecutable(true, false);
-                commandToSend = "bash ~/setup_zsh.sh";
-                scriptWritten = true;
+                File cacheScript = new File(new File(getCacheDir(), "store_scripts"), "setup_zsh.sh");
+                if (cacheScript.exists()) {
+                    cacheScript.delete();
+                }
             } catch (Exception ignored) {
-            }
-
-            if (!scriptWritten) {
-                try {
-                    File cacheDir = new File(getCacheDir(), "store_scripts");
-                    if (!cacheDir.exists()) cacheDir.mkdirs();
-                    File scriptFile = new File(cacheDir, "setup_zsh.sh");
-                    String scriptContent = "#!/data/data/com.termux/files/usr/bin/bash\n" +
-                        shellCommand.trim() + "\n";
-                    try (FileOutputStream fos = new FileOutputStream(scriptFile)) {
-                        fos.write(scriptContent.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                    }
-                    scriptFile.setExecutable(true, false);
-                    commandToSend = "bash " + scriptFile.getAbsolutePath();
-                } catch (Exception ignored) {
-                }
             }
         }
 
