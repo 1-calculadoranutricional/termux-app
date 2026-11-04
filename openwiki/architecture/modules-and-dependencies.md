@@ -32,7 +32,7 @@ As defined in `settings.gradle` (repo://settings.gradle#L1), the project include
 
 1. **`app`** (`com.termux`):
    - **Role**: The main Android application module (`com.android.application`).
-   - **Responsibilities**: Provides the primary user interface (activities, fragments, drawer layout, preferences), terminal session management, settings storage, execution services, and bootstrapping.
+   - **Responsibilities**: Provides the primary user interface (activities, fragments, drawer layout, preferences), terminal session management, settings storage, execution services, bootstrapping, and the curated package store subsystem (`com.termux.app.store`).
    - **Dependencies**: Depends on `:terminal-view` and `:termux-shared`, as well as AndroidX libraries, Material Components, Guava, and Markwon Markdown parser.
 
 2. **`termux-shared`** (`com.termux.shared`):

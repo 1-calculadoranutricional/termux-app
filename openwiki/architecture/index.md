@@ -1,4 +1,5 @@
 # Files
 
+- [Crash Handling & Diagnostics Architecture](crash-handling-and-diagnostics.md) - Uncaught exception handling, forensic crash reporting, notification dispatch, and Markwon-rendered report viewing across TermuxCrashUtils, CrashHandler, and ReportActivity.
 - [Modules and Dependencies](modules-and-dependencies.md) - Detailed breakdown of the multi-module project structure, Gradle configuration, and inter-module dependencies in Termux app.
 - [System Architecture Overview](overview.md) - High-level system architecture, component topology, processes, and service lifecycle of Termux-App.

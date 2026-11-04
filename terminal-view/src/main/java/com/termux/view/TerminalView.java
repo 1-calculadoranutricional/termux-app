@@ -469,8 +469,19 @@ public final class TerminalView extends View {
 
                 Editable content = getEditable();
                 if (content != null && content.length() > 0) {
-                    sendTextToTerminal(content);
-                    appendToBuffer(content);
+                    String str = content.toString();
+                    boolean isSolitaryNewline = str.equals("\n") || str.equals("\r") || str.equals("\r\n");
+                    if (isSolitaryNewline) {
+                        sendTextToTerminal("\r");
+                        mActiveWordBuffer.setLength(0);
+                    } else if (str.indexOf('\n') >= 0 || str.indexOf('\r') >= 0) {
+                        stopTextSelectionMode();
+                        mEmulator.paste(str);
+                        mActiveWordBuffer.setLength(0);
+                    } else {
+                        sendTextToTerminal(content);
+                        appendToBuffer(content);
+                    }
                     content.clear();
                 }
                 return true;
@@ -510,10 +521,44 @@ public final class TerminalView extends View {
 
                 if (mEmulator == null) return true;
 
+                if (text != null) {
+                    String str = text.toString();
+                    boolean isSolitaryNewline = str.equals("\n") || str.equals("\r") || str.equals("\r\n");
+                    if (isSolitaryNewline) {
+                        sendTextToTerminal("\r");
+                        mActiveWordBuffer.setLength(0);
+                        Editable content = getEditable();
+                        if (content != null) {
+                            content.clear();
+                        }
+                        return true;
+                    } else if (str.indexOf('\n') >= 0 || str.indexOf('\r') >= 0) {
+                        stopTextSelectionMode();
+                        mEmulator.paste(str);
+                        mActiveWordBuffer.setLength(0);
+                        Editable content = getEditable();
+                        if (content != null) {
+                            content.clear();
+                        }
+                        return true;
+                    }
+                }
+
                 Editable content = getEditable();
                 if (content != null && content.length() > 0) {
-                    sendTextToTerminal(content);
-                    appendToBuffer(content);
+                    String contentStr = content.toString();
+                    boolean isSolitaryNewline = contentStr.equals("\n") || contentStr.equals("\r") || contentStr.equals("\r\n");
+                    if (isSolitaryNewline) {
+                        sendTextToTerminal("\r");
+                        mActiveWordBuffer.setLength(0);
+                    } else if (contentStr.indexOf('\n') >= 0 || contentStr.indexOf('\r') >= 0) {
+                        stopTextSelectionMode();
+                        mEmulator.paste(contentStr);
+                        mActiveWordBuffer.setLength(0);
+                    } else {
+                        sendTextToTerminal(content);
+                        appendToBuffer(content);
+                    }
                     content.clear();
                 } else if (text != null && text.length() > 0) {
                     sendTextToTerminal(text);

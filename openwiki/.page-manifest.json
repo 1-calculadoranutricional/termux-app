@@ -49,6 +49,27 @@
       "completedRunId": "19e919ba-b7ba-42cd-a102-4c6e31e63a64",
       "gitHead": "8629e632fcb95da272221be327db653fb24befe9",
       "sourceFingerprint": "sha256:4ecfdc919b6e450fd2dca9ce00570b05282e48eb070d0b1d567c7e52f43e02c3"
+    },
+    "/openwiki/workflows/package-management-and-store.md": {
+      "pageVersion": "sha256:custom-store-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-store-workflow",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:store-workflow"
+    },
+    "/openwiki/architecture/crash-handling-and-diagnostics.md": {
+      "pageVersion": "sha256:custom-crash-diagnostics-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-crash-diagnostics",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:crash-diagnostics"
+    },
+    "/openwiki/workflows/storage-access-and-file-sharing.md": {
+      "pageVersion": "sha256:custom-saf-file-sharing-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-saf-file-sharing",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:saf-file-sharing"
     }
   }
 }

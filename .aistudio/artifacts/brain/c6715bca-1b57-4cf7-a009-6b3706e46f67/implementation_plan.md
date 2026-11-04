@@ -1,120 +1,97 @@
-# Corrección de Autocorrector de Gboard en Termux sin Duplicación
+# OpenWiki Technical Audit & Codebase Synchronization Plan
 
-Resolver el conflicto del autocorrector de Gboard al escribir desde el teclado táctil y presionar la barra espaciadora en Termux, eliminando la duplicación de palabras (ej. `"HlaHola Hola"`) mediante la sincronización del búfer de la palabra en `InputConnection` y la emisión precisa de caracteres de retroceso (`Backspace`) para reemplazar limpiamente la palabra antes de insertar la corrección.
+Comprehensive technical audit and documentation synchronization to align OpenWiki with the current state of the Termux Android codebase, ensuring 100% technical fidelity across IME/input handling, Termux Store architecture, package execution pipelines, and inter-module dependencies.
 
-### Decisiones Críticas y Preferencias Confirmadas
+## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> **Decisiones confirmadas por el usuario:**
-> - **Comportamiento del autocorrector al pulsar espacio**: Reemplazar automáticamente la palabra mal escrita por la corrección sugerida por el teclado.
-> - **Gestión de borrado**: Sincronizar el búfer de la palabra activa en `InputConnection` para borrar la palabra anterior enviando los códigos de retroceso (`\u007F`) exactos a la sesión de terminal antes de emitir el texto corregido.
-> - **Preservación de funcionalidades previas**: Mantener intacto el soporte de pegado de imágenes/capturas desde el portapapeles de Gboard, el pegado de texto y el dictado por voz (micrófono).
+> The audit scope and documentation guidelines have been confirmed:
+> - **Audit Scope**: Full comprehensive audit across core modules, software keyboard / IME input pipelines, and the Termux Store ecosystem.
+> - **Language & Format**: Technical English adhering to canonical OpenWiki standards with full YAML frontmatter (`type`, `title`, `description`, `tags`, `sources`, `verified`), Mermaid sequence/flowchart diagrams, and precise source file anchor references (`repo://<path>#L...`).
+
+- **Confirmed Decision 1**: Standard OpenWiki technical English with strict source anchoring.
+- **Confirmed Decision 2**: Create a dedicated new workflow document for Termux Store package lifecycle, installation, and execution (`openwiki/workflows/package-management-and-store.md`).
+- **Confirmed Decision 3**: Synchronize `rendering-and-view.md` to document the advanced `InputConnection` architecture in `TerminalView.java` (predictive text word buffer, Enter key execution, DECSET 2004 bracketed paste mode for multiline clipboard pastes).
 
 ---
 
-### 1. Visión General y Concepto Central
+## 1. Overview & Audit Scope
 
-- **Problema actual**: Con la configuración de `EditorInfo.inputType` enriquecida (`TYPE_CLASS_TEXT`), Gboard expone la barra completa de portapapeles, capturas de pantalla, micrófono y sugerencias de texto. Sin embargo, al escribir con el teclado e incurrir en una corrección al pulsar espacio:
-  1. `commitCorrection(CorrectionInfo)` interceptaba la sugerencia e insertaba el texto nuevo sin coordinar con el evento posterior del IME.
-  2. El método `commitText` de `TerminalView` borraba inmediatamente su `Editable` (`content.clear()`), provocando que `getTextBeforeCursor()` devolviera una cadena vacía.
-  3. Gboard perdía la noción del texto presente antes del cursor e inyectaba la corrección y el espacio como texto adicional, generando cadenas anómalas como `"HlaHola Hola"`.
-- **Solución propuesta**:
-  1. Mantener un búfer sincronizado de la línea o palabra activa (`mCurrentWordBuffer`) dentro del `InputConnection` que responda adecuadamente a `getTextBeforeCursor` y `getSelectedText`.
-  2. Desacoplar la inyección duplicada en `commitCorrection`: tratar `commitCorrection` de forma estándar o sincronizada para que no compita con `commitText` o `setComposingText`.
-  3. Al recibir una sustitución de palabra o región en composición (autocorrección por espacio o sugerencia), calcular la longitud real de la palabra mal escrita, enviar exactamente esa cantidad de retrocesos (`sendBackspace(n)`) a la terminal PTY e insertar la palabra corregida junto al espacio.
+### Current Codebase Reality vs. Documentation Gap Analysis
 
----
+1. **Terminal View & IME Input Handling (`rendering-and-view.md`)**:
+   - *Current Gap*: The document devotes only three brief bullet points to keyboard input, completely omitting the specialized `InputConnection` implementation in `TerminalView.java`.
+   - *Code Reality*: `TerminalView` manages predictive text and autocorrect using an internal `mActiveWordBuffer`, implements `getTextBeforeCursor()`, `getTextAfterCursor()`, and `getSelectedText()` to prevent character duplication in modern IMEs (such as Gboard), handles solitary newlines (`\n`, `\r`, `\r\n`) by dispatching carriage return (`\r`) directly for immediate command execution, routes multiline clipboard pastes to `TerminalEmulator.paste()` with DECSET 2004 bracketed paste sequences (`\033[200~ ... \033[201~`) to prevent prompt corruption (`cmdand>`), and supports rich content media commits (`commitContent`).
 
-### 2. Experiencia de Usuario y Flujo de Interacción
+2. **Termux Store Architecture & Package Lifecycle (`openwiki/workflows/package-management-and-store.md`)**:
+   - *Current Gap*: The Termux Store subsystem (`com.termux.app.store`) lacks any dedicated workflow documentation. `overview.md` only has a single-sentence mention.
+   - *Code Reality*: `com.termux.app.store` implements a full package discovery and installation catalog (`StorePackageItem`, `StorePackageAdapter`, `TermuxStoreActivity`) categorized by development, shells, editors, utilities, and networking. It features binary installation verification against `$PREFIX/bin/`, launch commands, silent/interactive terminal execution via `TermuxActivity.ACTION_EXECUTE_IN_CURRENT_SESSION`, and specialized shell script provisioning (e.g., `setup_zsh.sh` file generation in `$HOME` or cache with executable permissions for Zsh and Oh My Zsh). Curated catalog entries include Lazygit, Git, GitHub CLI, Neovim, Python, Node.js, and custom packages.
 
-```
-  ┌──────────────────────────────────────────────────────────────┐
-  │ 1. Usuario escribe "Hla" en el teclado táctil                │
-  │    - Se muestra "Hla" en la línea de comandos de Termux      │
-  │    - El búfer interno registra "Hla" como palabra activa     │
-  │    - Gboard resalta la sugerencia "Hola" en la barra         │
-  └──────────────────────────────┬───────────────────────────────┘
-                                 │
-                                 ▼
-  ┌──────────────────────────────────────────────────────────────┐
-  │ 2. Usuario presiona la barra "Espacio"                       │
-  │    - Gboard activa la autocorrección automática              │
-  └──────────────────────────────┬───────────────────────────────┘
-                                 │
-                                 ▼
-  ┌──────────────────────────────────────────────────────────────┐
-  │ 3. TerminalView sincroniza la sustitución:                   │
-  │    - Identifica la palabra previa ("Hla", longitud = 3)      │
-  │    - Emite 3 códigos de retroceso \u007F al PTY de Termux    │
-  │    - Emite la palabra corregida "Hola " a la terminal        │
-  │    - Actualiza el búfer interno a "Hola "                    │
-  └──────────────────────────────┬───────────────────────────────┘
-                                 │
-                                 ▼
-  ┌──────────────────────────────────────────────────────────────┐
-  │ 4. Resultado visible en Termux:                              │
-  │    $ Hola                                                    │
-  │    (Sin duplicación, sin saltos extraños, cursor al final)   │
-  └──────────────────────────────────────────────────────────────┘
-```
+3. **Architecture Overview & Navigation (`overview.md`, `quickstart.md`, `modules-and-dependencies.md`)**:
+   - *Current Gap*: `quickstart.md` and module docs omit the Store activity and its integration channels with the terminal session runner.
+   - *Code Reality*: `TermuxStoreActivity` directly invokes `TermuxActivity` via `ACTION_EXECUTE_IN_CURRENT_SESSION` with `EXTRA_COMMAND`, bridging application UI with the active `TerminalSession`.
 
 ---
 
-### 3. Decisiones Técnicas y Compensaciones (Trade-Offs)
+## 2. Documentation Architecture & Changes
 
-- **Eliminación de inyección redundante en `commitCorrection`**:
-  - *Enfoque*: En el framework de Android IME, `commitCorrection` es una notificación pasiva del teclado hacia el editor para resaltar sugerencias; la sustitución real de caracteres siempre viaja por `setComposingRegion` / `deleteSurroundingText` / `commitText`. Al suprimir la doble escritura en `commitCorrection`, evitamos que `"Hola"` se envíe dos veces.
-- **Búfer de palabra activa en `InputConnection`**:
-  - *Enfoque*: Implementar un `StringBuilder` o seguimiento de palabra en curso en la conexión de entrada. Cuando el IME solicita `getTextBeforeCursor(n, flags)`, devolvemos el contenido real del búfer en lugar de una cadena vacía.
-  - *Beneficio*: Gboard detecta con precisión los límites del texto y puede invocar `deleteSurroundingText` o `setComposingRegion` con los índices correctos.
-- **Preservación del soporte de imágenes y voz**:
-  - *Enfoque*: No alterar los tipos MIME declarados en `outAttrs.contentMimeTypes` ni el wrapper de `InputConnectionCompat.createWrapper()`, asegurando que los chips de capturas y el botón del micrófono sigan operativos al 100%.
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                         OpenWiki Routing Map                           │
+├────────────────────────────────┬───────────────────────────────────────┤
+│ Architecture                   │ Concepts                              │
+│ ├─ overview.md (Updated)       │ ├─ terminal-emulation.md              │
+│ └─ modules-and-dependencies.md │ └─ rendering-and-view.md (Updated)    │
+│                                │    └─ InputConnection & IME Pipeline  │
+├────────────────────────────────┴───────────────────────────────────────┤
+│ Workflows                                                              │
+│ ├─ session-lifecycle.md                                                │
+│ ├─ command-execution.md                                                │
+│ └─ package-management-and-store.md (NEW)                              │
+│    └─ StorePackageItem, Category Filtering, Terminal Session Dispatch │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+### Detailed File Modification Plan
+
+#### 1. Update `openwiki/concepts/rendering-and-view.md`
+- **Expand Section**: *Keyboard, IME, & Hardware Keys*.
+- **Add Subsections**:
+  - `InputConnection Lifecycle & Word Buffering`: Document `mActiveWordBuffer`, word boundaries, `appendToBuffer()`, `removeFromBuffer()`, and cursor text retrieval (`getTextBeforeCursor()`, `getTextAfterCursor()`, `getSelectedText()`).
+  - `Autocorrect & Predictive IME Synchronization`: Detail how pass-through `commitCorrection()` prevents duplicated text in modern keyboards like Gboard.
+  - `Command Execution vs. Bracketed Paste Handling`: Detail the branching in `commitText()`:
+    - Solitary newlines (`\n`, `\r`, `\r\n`) dispatch `\r` immediately to execute commands.
+    - Multiline blocks (clipboard pastes) activate DECSET 2004 bracketed paste mode (`\033[200~ ... \033[201~`) via `mEmulator.paste()` to prevent premature execution and command prompt corruption.
+  - `Rich Content Commit`: Document `commitContent(InputContentInfoCompat)` handling.
+- **Update Sources**: Anchor to `repo://terminal-view/src/main/java/com/termux/view/TerminalView.java`.
+
+#### 2. Create `openwiki/workflows/package-management-and-store.md` (NEW)
+- **Frontmatter**: Standard YAML (`type: workflow`, `title: Termux Store & Package Management Workflow`, tags, sources).
+- **Architecture & Sequence Diagram**: Mermaid diagram illustrating user browsing in `TermuxStoreActivity`, binary status inspection in `$PREFIX/bin/`, package action dispatch (`ACTION_EXECUTE_IN_CURRENT_SESSION`), and Zsh bootstrap script file generation (`setup_zsh.sh`).
+- **Core Components**:
+  - `StorePackageItem`: Schema definition (`id`, `name`, `description`, `category`, `iconRes`, `installCommand`, `binaryPath`, `launchCommand`, `isInstalled`, `uninstallCommand`).
+  - `StorePackageAdapter`: Search filtering, categorized view rendering, and installation state checks.
+  - `Execution Pipelines`:
+    - Direct command dispatch via `TermuxActivity.ACTION_EXECUTE_IN_CURRENT_SESSION`.
+    - Automated shell script generation (`setup_zsh.sh`) written to `$HOME` or app internal cache with `chmod +x` executable permissions.
+  - Curated Catalog Overview: Development (Git, Lazygit, GitHub CLI), Shells (Zsh, Fish), Editors (Neovim, Nano, Micro), Utilities, and Languages (Python, Node.js).
+- **Sources**: Anchor to `repo://app/src/main/java/com/termux/app/store/TermuxStoreActivity.java`, `StorePackageItem.java`, `StorePackageAdapter.java`.
+
+#### 3. Update `openwiki/architecture/overview.md`
+- Deepen the description of `TermuxStoreActivity` under *Auxiliary Activities*.
+- Add `TermuxStoreActivity` to the architectural topology sequence diagram and component relationships showing how it commands the active terminal session via `ACTION_EXECUTE_IN_CURRENT_SESSION`.
+
+#### 4. Update Navigation & Indexes
+- Update `openwiki/quickstart.md`: Add `[Termux Store & Package Management](workflows/package-management-and-store.md)` to the routing map and project structure.
+- Update `openwiki/workflows/index.md`: Add link and description for `package-management-and-store.md`.
 
 ---
 
-### 4. Arquitectura Técnica y Estrategia de Datos
+## 3. Verification & CodeGraph Synchronization
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ Gboard (IME)                                                             │
-│   ├── Suggestions & Autocorrect Engine                                   │
-│   ├── Queries: getTextBeforeCursor()                                     │
-│   └── Actions: deleteSurroundingText() / setComposingRegion() / commitText│
-└────────────────────────────────────┬─────────────────────────────────────┘
-                                     │
-                                     ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│ TerminalView.java (InputConnection)                                      │
-│   ├── mActiveWordBuffer (Buffer de texto sincronizado antes del cursor)  │
-│   ├── getTextBeforeCursor(n, flags) -> Retorna buffer de palabra activa  │
-│   ├── deleteSurroundingText(before, after)                               │
-│   │     └── sendBackspace(before) + actualiza mActiveWordBuffer          │
-│   ├── commitText(text, newCursorPos)                                     │
-│   │     ├── Si mComposingRegionLength > 0 -> sendBackspace(length)       │
-│   │     ├── sendTextToTerminal(text)                                     │
-│   │     └── actualiza mActiveWordBuffer con delimitadores (espacio/enter)│
-│   └── commitCorrection(correctionInfo)                                   │
-│         └── Sincronización pasiva (no duplica sendTextToTerminal)        │
-└────────────────────────────────────┬─────────────────────────────────────┘
-                                     │
-                                     ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│ TerminalSession / TerminalEmulator (PTY)                                 │
-│   ├── Recibe exactamente: \u007F\u007F\u007F ("Hla" borrado)             │
-│   └── Recibe: "Hola " (Texto corregido)                                  │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-#### Plan de Modificaciones
-
-1. **`terminal-view/src/main/java/com/termux/view/TerminalView.java`**:
-   - Ajustar el `InputConnection` creado en `onCreateInputConnection`:
-     - Incorporar `mActiveWordBuffer` para registrar los caracteres que se van escribiendo o pegando en la línea actual.
-     - Implementar `getTextBeforeCursor(int n, int flags)` para retornar el final de `mActiveWordBuffer`, permitiendo a Gboard conocer la palabra actual.
-     - En `deleteSurroundingText(int leftLength, int rightLength)`: recortar `mActiveWordBuffer` en `leftLength` caracteres y enviar `sendBackspace(leftLength)`.
-     - En `commitCorrection(CorrectionInfo correctionInfo)`: evitar la escritura manual redundante si la corrección ya está siendo gestionada por el flujo de composición/commit del IME.
-     - En `commitText(CharSequence text, int newCursorPosition)`: verificar si el reemplazo sustituye la palabra previa; si es así, retroceder la longitud correspondiente y registrar el nuevo texto en el búfer. Si el carácter es un delimitador (espacio o salto de línea), resetear el búfer de la palabra activa.
-     - En `sendKeyEvent`: al detectar `KEYCODE_ENTER` o `KEYCODE_DEL`, actualizar en sincronía el búfer local.
-
-2. **Verificación y Compilación**:
-   - Compilar el proyecto completo usando `compile_applet` para garantizar que la compilación de todos los módulos (`:terminal-view`, `:terminal-emulator`, `:termux-shared`, `:app`) sea exitosa.
+1. **Strict Non-Interactive Synchronization**:
+   - Run `codegraph sync --no-color` immediately upon completing all file additions and updates to ensure the repository graph and OpenWiki index are synchronized.
+2. **Link & Reference Integrity**:
+   - Verify all markdown links, YAML anchors (`repo://...`), and Mermaid diagrams for syntax correctness.
+3. **Applet Compilation Check**:
+   - Run `compile_applet` to ensure overall project health and clean build state.
