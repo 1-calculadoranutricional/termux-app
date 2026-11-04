@@ -10,6 +10,9 @@ sources:
     resource: repo://app/src/main/java/com/termux/app/api/file/FileReceiverActivity.java
   - id: openwiki-source-manifest
     resource: repo://app/src/main/AndroidManifest.xml
+verified:
+  - by: manual-audit
+    at: 2026-11-04T03:00:00.000Z
 ---
 
 # Storage Access Framework & External File Sharing Workflow

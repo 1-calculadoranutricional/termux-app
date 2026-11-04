@@ -30,12 +30,15 @@ Use this guide to navigate across the major domains of the Termux App codebase. 
 ### Core Emulation & UI Concepts
 - **[Terminal Emulation Engine](concepts/terminal-emulation.md)**: DEC VT/ANSI escape sequence processing, screen buffer management (`TerminalBuffer`, `TerminalRow`), color schemes, and screen text handling.
 - **[Terminal View & Rendering](concepts/rendering-and-view.md)**: UI rendering pipeline in `TerminalView`, touch gesture translation, scrolling, font metrics, text selection, and rich clipboard content resolution.
+- **[Virtual Keyboard & Extra Keys Toolbar](concepts/virtual-keyboard-and-extra-keys.md)**: On-screen extra keys bar (`ExtraKeysView`), modifier state machine (Ctrl, Alt, Fn), swipe macros, and `termux.properties` key mapping.
+- **[Subprocess IPC & Android Manager Socket Server](concepts/ipc-and-socket-server.md)**: Native `AF_UNIX` domain socket server (`AmSocketServer`), `SO_PEERCRED` security verification, and high-performance `am` intent execution.
 
 ### Workflows & Execution
 - **[Terminal Session Lifecycle](workflows/session-lifecycle.md)**: End-to-end flow of terminal session creation (`TerminalSession`), process execution via `TermuxTerminalSessionClient`, background execution, and destruction.
 - **[Command Execution Workflow](workflows/command-execution.md)**: External command execution, `RunCommandService` intent handling, broadcast receivers, and shell integration.
 - **[Termux Store & Package Management](workflows/package-management-and-store.md)**: Curated package catalog discovery, dynamic binary presence inspection, guide dialogs, and direct active session execution (`ACTION_EXECUTE_IN_CURRENT_SESSION`).
 - **[Storage Access & File Sharing](workflows/storage-access-and-file-sharing.md)**: Storage Access Framework integration (`TermuxDocumentsProvider`) exposing `$HOME`, and external share intent handling (`FileReceiverActivity`) for downloads, URLs, and scripts.
+- **[Termux Bootstrap & Environment Installation](workflows/bootstrap-installation.md)**: Native archive extraction (`libtermux-bootstrap.so`), staging promotion, `SYMLINKS.txt` resolution, POSIX permissions, and initial storage setup.
 
 ---
 

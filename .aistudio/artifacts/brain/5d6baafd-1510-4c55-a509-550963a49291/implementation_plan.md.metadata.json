@@ -1,0 +1,6 @@
+{
+  "summary": "Plan de calibración y reescritura de AGENTS.md enfocado 100% en el agente de Google AI Studio: mapeo directo a herramientas nativas (view_file, replace_file_content, compile_applet, run_command), eliminación de abstracciones de subagentes y adaptación a las restricciones reales del contenedor en la nube.",
+  "updatedAt": "2026-11-04T04:21:02.638108302Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
