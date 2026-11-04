@@ -6,13 +6,13 @@ In repositories with an `openwiki/` directory, you **MUST** ground your conceptu
 1. **Mandatory Conceptual Routing**:
    - At the start of a task involving architecture, features, or workflows, first inspect `openwiki/quickstart.md` to identify the relevant domain.
    - The repository is organized into three major areas across 4 modules (`:app`, `:termux-shared`, `:terminal-view`, `:terminal-emulator`):
-     - **Architecture**: `openwiki/architecture/overview.md` (topology & services) and `modules-and-dependencies.md` (multi-module Gradle structure).
+     - **Architecture**: `openwiki/architecture/overview.md` (topology & services), `modules-and-dependencies.md` (multi-module Gradle structure), and `crash-handling-and-diagnostics.md` (uncaught exceptions, telemetry & report UI).
      - **Concepts**: `openwiki/concepts/terminal-emulation.md` (VT/ANSI engine) and `rendering-and-view.md` (terminal view & touch pipelines).
-     - **Workflows**: `openwiki/workflows/session-lifecycle.md` (session creation & execution), `command-execution.md` (RunCommandService & intent APIs), and `package-management-and-store.md` (Termux Store & package lifecycle).
+     - **Workflows**: `openwiki/workflows/session-lifecycle.md` (session creation & execution), `command-execution.md` (RunCommandService & intent APIs), `package-management-and-store.md` (Termux Store & package lifecycle), and `storage-access-and-file-sharing.md` (Storage Access Framework & external file sharing).
 
 2. **Scoped Context Loading & Symbol Extraction**:
    - Read ONLY the specific subpage identified from `quickstart.md` mapping to the task to avoid context overload.
-   - **Extract Anchor Symbols**: Collect the primary classes and interfaces listed under the page's YAML `sources:` block (e.g. `TerminalEmulator`, `RunCommandService`, `TermuxSession`, `TermuxStoreActivity`) to serve as immediate entry points for Step 2.
+   - **Extract Anchor Symbols**: Collect the primary classes and interfaces listed under the page's YAML `sources:` block (e.g. `TerminalEmulator`, `RunCommandService`, `TermuxSession`, `TermuxStoreActivity`, `TermuxDocumentsProvider`, `FileReceiverActivity`, `CrashHandler`, `ReportActivity`) to serve as immediate entry points for Step 2.
 
 3. **Authoritative Alignment**:
    - Use OpenWiki to understand module boundaries, responsibilities, and system lifecycles. Once grounded, proceed to **Step 2 (CodeGraph)** to locate exact symbols and execution graphs.
@@ -24,12 +24,12 @@ In repositories with an `openwiki/` directory, you **MUST** ground your conceptu
 
 In repositories where `.codegraph/` exists, CodeGraph serves as the mandatory structural navigation engine. It **MUST** always be present and executed in non-interactive mode.
 
-1. **Automatic Installation & Initialization**:
-   - If `codegraph` is not found in `$PATH`, the agent **MUST** immediately install it via:
+1. **Automatic Installation & Resilient Initialization**:
+   - If `codegraph` command is not found in `$PATH`, the agent **MUST** immediately install it via:
      ```bash
      npm install -g @colbymchenry/codegraph
      ```
-   - If the index is not initialized or database is missing, initialize non-interactively with:
+   - If CodeGraph database is uninitialized or `codegraph sync` reports `CodeGraph not initialized`, initialize non-interactively first:
      ```bash
      codegraph init -y --no-color
      ```
@@ -49,6 +49,7 @@ In repositories where `.codegraph/` exists, CodeGraph serves as the mandatory st
    - For JNI/native methods identified in the graph, inspect the corresponding C sources under `src/main/jni/` or `src/main/cpp/`.
    - Bypassing CodeGraph in favor of arbitrary file reading or text grepping when `.codegraph/` is present is strictly prohibited.
 
-4. **Mandatory Index Synchronization**:
+4. **Mandatory Index Synchronization & Fallback Flow**:
    - You **MUST** run `codegraph sync --no-color` immediately after creating, modifying, or deleting source files to preserve index freshness for downstream tasks.
+   - **Fallback Recovery**: If `codegraph sync --no-color` fails with `CodeGraph not initialized`, execute `codegraph init -y --no-color` and re-run `codegraph sync --no-color`.
 <!-- CODEGRAPH:END -->
