@@ -1,8 +1,8 @@
 ---
 type: workflow
 title: Termux Store & Package Management Workflow
-description: Package discovery, status inspection, installation dispatch, and shell script provisioning in TermuxStoreActivity.
-tags: [termux-store, packages, installation, activity, workflow, zsh, lazygit]
+description: Package discovery, dynamic installation inspection, guide dialogs, direct active session execution, and curated catalog management in TermuxStoreActivity.
+tags: [termux-store, packages, installation, activity, workflow, direct-session-execution, ai-cli]
 sources:
   - id: openwiki-source-store-activity
     resource: repo://app/src/main/java/com/termux/app/store/TermuxStoreActivity.java
@@ -16,40 +16,44 @@ sources:
 
 # Termux Store & Package Management Workflow
 
-The **Termux Store** (`com.termux.app.store`) is an interactive package discovery and management subsystem within the `:app` module. It provides a curated graphical interface (Play Store styled) allowing users to search, inspect installation status, install, launch, and uninstall CLI tools, programming environments, and shell enhancements without having to manually recall APT/PKG package names or repository commands.
+The **Termux Store** (`com.termux.app.store`) is an interactive package discovery, installation, and tools management subsystem within the `:app` module. Styled after modern application stores (Google Play Store dark theme), it provides a curated catalog enabling users to search, inspect installation state, read beginner and initialization guides, copy setup commands, and install, update, launch, or uninstall CLI tools, programming runtimes, system utilities, and AI developer CLI tools directly in their active terminal session.
 
 ---
 
 ## Architecture & Interaction Flow
 
-`TermuxStoreActivity` interacts directly with the local Termux filesystem to determine package installation state, and communicates with `TermuxActivity` to execute commands inside the active terminal session.
+`TermuxStoreActivity` interacts directly with the local Termux filesystem to determine package installation state, and communicates with `TermuxActivity` via `ACTION_EXECUTE_IN_CURRENT_SESSION` to execute commands inside the active terminal session without spawning separate background scripts or secondary sessions.
 
 ```mermaid
 sequenceDiagram
     participant User as User
     participant Store as TermuxStoreActivity
+    participant Adapter as StorePackageAdapter
     participant FS as Termux Filesystem ($PREFIX/bin)
     participant Act as TermuxActivity
     participant Term as TerminalSession
 
-    User->>Store: Open Store & Browse / Filter Packages
-    Store->>FS: checkInstallationStatus() (File.exists on binaryPath)
-    FS-->>Store: Binary presence confirmed (true/false)
-    Store->>Store: Render state ("Instalar" / "Ejecutar" / "Desinstalar")
+    User->>Store: Open Store & Browse / Filter by Category or Search Query
+    Store->>Adapter: Bind package item
+    Adapter->>FS: Check binaryCheckPath (split by ':' & File.exists)
+    FS-->>Adapter: Presence confirmed (isInstalled: true/false)
+    Adapter-->>User: Render state ("Instalar" / "Actualizar" / "Ejecutar" + optional "Desinstalar")
 
-    alt Standard Package Install / Run
-        User->>Store: Click "Instalar" or "Ejecutar"
+    alt Direct Action Click ("Instalar", "Actualizar", "Ejecutar", "Desinstalar")
+        User->>Adapter: Tap Action Button
+        Adapter->>Store: onActionClick(item, isInstalled) / onSecondaryActionClick(item)
         Store->>Act: Intent(ACTION_EXECUTE_IN_CURRENT_SESSION, EXTRA_COMMAND)
-        Act->>Term: Write command + \r to active session
-        Term-->>User: Command executes in foreground terminal
-    else Specialized Script Setup (e.g. Zsh)
-        User->>Store: Click "Instalar" for Zsh
-        Store->>FS: Write ~/setup_zsh.sh (executable chmod +x)
-        Store->>Act: Intent(ACTION_EXECUTE_IN_CURRENT_SESSION, "bash ~/setup_zsh.sh")
-        Act->>Term: Execute bash ~/setup_zsh.sh
+        Act->>Term: Write shellCommand + \r to active session
+        Term-->>User: Command executes immediately in foreground terminal
+    else Detail & Beginner Guide Dialog
+        User->>Adapter: Tap Package Card
+        Adapter->>Store: onItemClick(item)
+        Store->>User: Display MaterialAlertDialog (Init Guide, Help, Quick Tip)
+        User->>Store: Tap "Copiar comandos" or action button
+        Store->>Act: Intent(ACTION_EXECUTE_IN_CURRENT_SESSION) or copy to ClipboardManager
     end
 ```
-*Sequence of package status detection and command dispatch from Termux Store.*
+*Sequence of package inspection, guide interaction, and direct command execution from Termux Store.*
 
 ---
 
@@ -57,69 +61,76 @@ sequenceDiagram
 
 ### 1. `StorePackageItem` (`com.termux.app.store.StorePackageItem`)
 Represents an individual entry in the package store catalog:
-- **`id`** (`String`): Unique package identifier (e.g., `"git"`, `"lazygit"`, `"zsh"`, `"neovim"`).
-- **`name`** (`String`): Human-readable package title.
+- **`id`** (`String`): Unique package identifier (e.g., `"git"`, `"openwiki"`, `"codegraph"`, `"engram"`, `"zsh"`, `"neovim"`).
+- **`title`** (`String`): Human-readable package title displayed in cards and dialogs.
+- **`categoryId`** (`String`): Category ID for filtering (`"system"`, `"tools"`, `"dev"`, `"google"`, `"ia"`).
+- **`category`** (`String`): Human-readable category display badge (e.g., `"IA y CLI • Wiki & Arquitectura"`).
 - **`description`** (`String`): Detailed overview of tool capabilities.
-- **`category`** (`String`): Grouping category (`"desarrollo"`, `"shells"`, `"editores"`, `"utilidades"`, `"lenguajes"`, `"redes"`).
-- **`iconRes`** (`int`): Resource ID of the package icon drawable (`R.drawable.ic_pkg_*`).
-- **`installCommand`** (`String`): CLI command string executed to install (e.g., `"pkg install lazygit -y"`).
-- **`binaryPath`** (`String`): Absolute path to the expected binary in Termux prefix (e.g., `"/data/data/com.termux/files/usr/bin/lazygit"`).
-- **`launchCommand`** (`String`): Command executed when user launches the tool directly from the store (e.g., `"lazygit"`, `"nvim"`).
-- **`isInstalled`** (`boolean`): Runtime flag updated via binary existence inspection.
-- **`uninstallCommand`** (`String`): Optional removal command (e.g., `"pkg uninstall lazygit -y"`).
+- **`iconResId`** (`int`): Resource ID of the package icon drawable (`R.drawable.ic_pkg_*`).
+- **`installCommand`** (`String`): CLI command string executed to install (e.g., `"pkg install lazygit -y"` or `"npm install -g @colbymchenry/codegraph"`).
+- **`uninstallCommand`** (`String`, nullable): Optional removal command (e.g., `"pkg uninstall lazygit -y"`).
+- **`updateCommand`** (`String`, nullable): Optional update command executed when the package is already installed.
+- **`binaryCheckPath`** (`String`, nullable): Colon-separated (`:`) list of candidate binary paths in `$PREFIX/bin/` or `$HOME/` used to verify installation status.
+- **`rating`** (`String`): Star rating display (e.g., `"4.9 ★"`).
+- **`size`** (`String`): Approximate download/install size (e.g., `"15 MB"`).
+- **`initGuide`** (`String`, nullable): Step-by-step instructions for initializing the tool.
+- **`helpGuide`** (`String`, nullable): Commands for accessing help and documentation.
+- **`quickTip`** (`String`, nullable): Beginner tips and best practices.
+- **`ActionType`** (`enum`): `INSTALL`, `UPDATE`, `UNINSTALL`, `EXECUTE`.
 
 ### 2. `StorePackageAdapter` (`com.termux.app.store.StorePackageAdapter`)
 A `RecyclerView.Adapter` rendering package cards and handling user interaction:
 - **Filtering**: Filters items in real time based on search query strings and active category chips.
-- **State Presentation**: Adapts action buttons dynamically based on `item.isInstalled()`:
+- **Dynamic Binary Status**: Iterates through colon-separated paths in `item.getBinaryCheckPath()`. If any path exists (`new File(path).exists()`), the package is marked as installed.
+- **Button State Resolution**:
+  - If `binaryCheckPath == null`: Displays single **"Ejecutar"** button (for system utilities like storage permission setup or backup/restore).
+  - If installed: Displays primary **"Actualizar"** button and secondary **"Desinstalar"** button (if `uninstallCommand` is present).
   - If not installed: Displays primary **"Instalar"** button.
-  - If installed: Displays **"Ejecutar"** (launch) and secondary **"Desinstalar"** (uninstall) buttons.
-- **Callbacks**: Dispatches action events via `OnPackageActionListener` to the parent activity.
+- **Package Details Dialog**: Clicking the card triggers `onItemClick()`, presenting a Material Design dialog containing `description`, `initGuide`, `helpGuide`, `quickTip`, and a **"Copiar comandos"** button.
 
 ### 3. `TermuxStoreActivity` (`com.termux.app.store.TermuxStoreActivity`)
-Main activity managing the catalog lifecycle:
-- **`checkInstallationStatus()`**: Runs during `onResume()` and catalog initialization. Iterates over all registered package items and checks whether `item.getBinaryPath()` points to an existing file in `$PREFIX/bin/` (`new File(item.getBinaryPath()).exists()`).
-- **`executeShellCommandInTerminal()`**: Bridges package actions to the terminal session.
+Main activity managing the catalog lifecycle and terminal bridging:
+- **Search & Chips**: Real-time search bar with clear button (`store_search_clear`) and horizontal category chips (`"Para ti"`, `"Sistema"`, `"Herramientas"`, `"Desarrollo"`, `"Google"`, `"IA & CLI"`).
+- **`executeShellCommandInTerminal()`**: Bridges package actions directly to the active terminal session.
+- **Script Cleanup**: Defensively removes any legacy `setup_zsh.sh` files from `$HOME` or cache directory to prevent conflicting multi-step script executions.
 
 ---
 
-## Execution Pipelines & Session Integration
+## Direct Active Session Execution Pipeline
 
-When a user taps an action button in the store, `executeShellCommandInTerminal()` prepares and routes the command:
-
-### 1. Standard Interactive Execution (`ACTION_EXECUTE_IN_CURRENT_SESSION`)
-For standard tools (such as Git, Lazygit, Node.js, Neovim):
-1. Prepares intent with action `TermuxActivity.ACTION_EXECUTE_IN_CURRENT_SESSION`.
-2. Attaches `TermuxActivity.EXTRA_COMMAND` set to the shell command.
-3. Sets `FLAG_ACTIVITY_REORDER_TO_FRONT` to smoothly bring the terminal UI to foreground.
-4. `TermuxActivity#onNewIntent()` receives the intent, extracts the command, and writes it directly to the active `TerminalSession` followed by a carriage return (`\r`), executing it immediately.
-
-### 2. Specialized Script Setup (Zsh / Oh My Zsh Provisioning)
-Complex tools requiring interactive installation scripts or multi-step environment configuration (such as `zsh`) utilize dedicated script generation:
-1. `TermuxStoreActivity` intercepts package ID `"zsh"`.
-2. Generates an executable script `~/setup_zsh.sh` in the user's home directory (`TermuxConstants.TERMUX_HOME_DIR_PATH`), with an automatic fallback to `getCacheDir()/store_scripts/setup_zsh.sh` if home storage write fails.
-3. Sets executable permissions via `scriptFile.setExecutable(true, false)`.
-4. Dispatches `bash ~/setup_zsh.sh` to `TermuxActivity` via `ACTION_EXECUTE_IN_CURRENT_SESSION`.
+Unlike legacy approaches that created temporary `.sh` shell scripts or opened separate sessions:
+1. `TermuxStoreActivity` packages the target shell command string.
+2. Constructs an explicit `Intent` targeting `TermuxActivity`:
+   ```java
+   Intent termuxIntent = new Intent(this, TermuxActivity.class);
+   termuxIntent.setAction(TermuxActivity.ACTION_EXECUTE_IN_CURRENT_SESSION);
+   termuxIntent.putExtra(TermuxActivity.EXTRA_COMMAND, commandToSend);
+   termuxIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+   startActivity(termuxIntent);
+   ```
+3. `FLAG_ACTIVITY_REORDER_TO_FRONT` brings the existing `TermuxActivity` directly to the foreground without recreating it.
+4. `TermuxActivity.onNewIntent(Intent)` receives `ACTION_EXECUTE_IN_CURRENT_SESSION`, extracts `EXTRA_COMMAND`, and writes it followed by a carriage return (`\r`) directly into the active `TerminalSession`.
+5. The command runs interactively in the current terminal prompt, allowing users to watch installation progress and respond to interactive prompts (such as `[Y/n]` confirmations).
 
 ---
 
-## Curated Catalog Categories
+## Curated Catalog Categories & Packages
 
-The store initializes curated packages across distinct domains:
+The catalog is organized into five functional categories:
 
-| Category | Example Packages | Install Command | Launch Command |
+| Category ID | Display Label | Packages Included | Primary Commands |
 |---|---|---|---|
-| **Desarrollo** | Git, Lazygit, GitHub CLI (`gh`) | `pkg install lazygit -y` | `lazygit` |
-| **Shells** | Zsh, Oh My Zsh, Fish | `pkg install zsh -y && ...` | `zsh` |
-| **Editores** | Neovim, Nano, Micro, Helix | `pkg install neovim -y` | `nvim` |
-| **Utilidades** | Tmux, Htop, Yazi, Ranger, Fzf, Bat, Eza | `pkg install tmux -y` | `tmux` |
-| **Lenguajes** | Python, Node.js, Rust, OpenJDK | `pkg install python nodejs -y` | `python` / `node` |
-| **Redes** | Nmap, OpenSSH, Wget, Curl | `pkg install nmap -y` | `nmap` |
+| **`ia`** | **IA & CLI** | OpenWiki CLI, CodeGraph, Engram | `npm install -g openwiki`, `npm install -g @colbymchenry/codegraph`, `engram` setup |
+| **`system`** | **Sistema** | Termux Storage (`termux-setup-storage`), Backup/Restore, Mirrors Config (`termux-change-repo`), Termux-API | `termux-setup-storage`, `pkg install termux-api -y` |
+| **`tools`** | **Herramientas** | Zsh + Oh My Zsh, Lazygit, Yazi, Neovim, Tmux, Htop | Direct `pkg install` + theme setups |
+| **`dev`** | **Desarrollo** | Git, GitHub CLI (`gh`), Node.js, Python, Golang, Rust | Runtime installs and CLI compilers |
+| **`google`** | **Google** | Gemini CLI, Cloud SDK, Angular CLI, Antigravity | CLI developer tools for cloud and web |
 
 ---
 
 ## Invariants & Error Handling
 
-- **Filesystem Verification**: Package installation state is strictly derived from binary presence in `$PREFIX/bin/` rather than cached APT database queries, guaranteeing instantaneous and accurate status reflection even if packages were installed or removed externally from the CLI.
-- **Session Availability**: If no terminal session is currently running, `TermuxActivity` initializes the primary shell session before executing the incoming intent command.
-- **UI Non-Blocking**: Binary checks and filesystem checks run lightweight file existence calls without blocking the Android UI thread.
+- **Zero Temporary Scripts**: No `.sh` scripts are written to `$HOME` or cache directories during store package dispatch. All executions stream directly to the foreground terminal session.
+- **Multi-Path Binary Verification**: Packages providing multiple binaries or alternative paths (e.g., `binaryCheckPath` containing multiple colon-delimited paths) are considered installed if any candidate exists.
+- **Safe Session Fallback**: If `TermuxActivity` has no active session when receiving `ACTION_EXECUTE_IN_CURRENT_SESSION`, it ensures the primary session is initialized before writing the command.
+- **Clipboard Utility Integration**: Users can preview initialization and help commands and copy them cleanly to the Android system clipboard without triggering terminal execution.

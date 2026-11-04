@@ -56,6 +56,20 @@
       "completedRunId": "auditor-sync-store-workflow",
       "gitHead": "HEAD",
       "sourceFingerprint": "sha256:store-workflow"
+    },
+    "/openwiki/architecture/crash-handling-and-diagnostics.md": {
+      "pageVersion": "sha256:custom-crash-diagnostics-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-crash-diagnostics",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:crash-diagnostics"
+    },
+    "/openwiki/workflows/storage-access-and-file-sharing.md": {
+      "pageVersion": "sha256:custom-saf-file-sharing-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-saf-file-sharing",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:saf-file-sharing"
     }
   }
 }

@@ -25,15 +25,17 @@ Use this guide to navigate across the major domains of the Termux App codebase. 
 ### Architecture & Modules
 - **[System Architecture Overview](architecture/overview.md)**: High-level system architecture, component topology, process/service structure, and security boundaries.
 - **[Modules and Dependencies](architecture/modules-and-dependencies.md)**: Breakdown of Gradle modules (`:app`, `:terminal-emulator`, `:terminal-view`, `:termux-shared`), inter-module dependencies, and library integration.
+- **[Crash Handling & Diagnostics](architecture/crash-handling-and-diagnostics.md)**: Uncaught exception handling (`CrashHandler`), forensic telemetry (`TermuxCrashUtils`), notification alerts, and Markwon-powered markdown reports (`ReportActivity`).
 
 ### Core Emulation & UI Concepts
 - **[Terminal Emulation Engine](concepts/terminal-emulation.md)**: DEC VT/ANSI escape sequence processing, screen buffer management (`TerminalBuffer`, `TerminalRow`), color schemes, and screen text handling.
-- **[Terminal View & Rendering](concepts/rendering-and-view.md)**: UI rendering pipeline in `TerminalView`, touch gesture translation, scrolling, font metrics, and text selection handling.
+- **[Terminal View & Rendering](concepts/rendering-and-view.md)**: UI rendering pipeline in `TerminalView`, touch gesture translation, scrolling, font metrics, text selection, and rich clipboard content resolution.
 
 ### Workflows & Execution
 - **[Terminal Session Lifecycle](workflows/session-lifecycle.md)**: End-to-end flow of terminal session creation (`TerminalSession`), process execution via `TermuxTerminalSessionClient`, background execution, and destruction.
 - **[Command Execution Workflow](workflows/command-execution.md)**: External command execution, `RunCommandService` intent handling, broadcast receivers, and shell integration.
-- **[Termux Store & Package Management](workflows/package-management-and-store.md)**: Curated package catalog discovery, binary presence checks, terminal session execution dispatch, and shell script provisioning.
+- **[Termux Store & Package Management](workflows/package-management-and-store.md)**: Curated package catalog discovery, dynamic binary presence inspection, guide dialogs, and direct active session execution (`ACTION_EXECUTE_IN_CURRENT_SESSION`).
+- **[Storage Access & File Sharing](workflows/storage-access-and-file-sharing.md)**: Storage Access Framework integration (`TermuxDocumentsProvider`) exposing `$HOME`, and external share intent handling (`FileReceiverActivity`) for downloads, URLs, and scripts.
 
 ---
 

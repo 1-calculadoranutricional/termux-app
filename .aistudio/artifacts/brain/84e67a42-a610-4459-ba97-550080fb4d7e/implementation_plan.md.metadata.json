@@ -1,0 +1,6 @@
+{
+  "summary": "Auditoría técnica exhaustiva y plan de sincronización integral de la OpenWiki con el código fuente real de Termux, corrigiendo discrepancias críticas en TermuxStoreActivity, StorePackageItem, InputConnection/Rich Content, y creando nuevas páginas para TermuxDocumentsProvider, FileReceiverActivity y CrashHandler/Diagnostics.",
+  "updatedAt": "2026-11-04T01:49:54.161698029Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

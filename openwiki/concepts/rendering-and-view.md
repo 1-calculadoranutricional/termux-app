@@ -130,8 +130,19 @@ sequenceDiagram
    - **Multiline Text Blocks**: Strings containing embedded line breaks (such as text pasted from the Gboard clipboard strip) are intercepted and routed through `mEmulator.paste(str)`. This triggers DECSET 2004 bracketed paste mode (`\033[200~` ... `\033[201~`), ensuring shells (Zsh, Bash, Fish) do not prematurely execute lines or corrupt the command prompt.
 5. **Surrounding Text Deletion (`deleteSurroundingText`)**:
    - Translates deletion lengths to terminal backspaces (`\u007F` or `KeyHandler.getCode(KEYCODE_DEL)`) and forward deletes (`\033[3~` or `KeyHandler.getCode(KEYCODE_FORWARD_DEL)`), while keeping `mActiveWordBuffer` synchronized.
-6. **Rich Content (`commitContent`)**:
-   - Implements `InputConnectionCompat.OnCommitContentListener` to accept image payloads (PNG, JPEG, GIF, WebP) from keyboard clipboards with automatic URI permission grants (`INPUT_CONTENT_GRANT_READ_URI_PERMISSION`).
+6. **Rich Content (`commitContent`) & Clipboard Image Pipeline**:
+   - `TerminalView` configures an `InputConnectionCompat.OnCommitContentListener` on its input connection wrapper, supporting MIME types including `image/png`, `image/jpeg`, `image/webp`, and `image/gif`.
+   - On Android N MR1+ (API 25+), read URI permissions are requested via `inputContentInfo.requestPermission()`.
+   - The event is forwarded to `TermuxTerminalViewClient.onCommitContent(InputContentInfoCompat, int, Bundle)`.
+   - **Resolution & Storage Mapping (`resolveOrSaveClipboardContent`)**:
+     - *Direct Media Store / Filesystem Query*: Queries `MediaStore.MediaColumns.DATA` and `OpenableColumns.DISPLAY_NAME` from Android's `ContentResolver`.
+     - *Symlink Mapping (`mapToTermuxStoragePath`)*: If the URI corresponds to an existing file in shared storage, the path is translated into the canonical Termux storage symlink:
+       - `/storage/emulated/0/DCIM/...` → `~/storage/dcim/...`
+       - `/storage/emulated/0/Pictures/...` → `~/storage/pictures/...`
+       - `/storage/emulated/0/Download/...` → `~/storage/downloads/...`
+       - Shared storage fallback → `~/storage/shared/...`
+     - *Stream Ingestion & Screenshot Saving (`saveContentStreamToFile`)*: If the content URI is a transient stream or inaccessible directly by path, the input stream is saved to `~/storage/dcim/Screenshots/Screenshot_YYYYMMDD_HHmmss.<ext>` (with automatic fallback to `~/clipboard/` if DCIM is unwritable).
+     - *Terminal Path Injection*: The resulting canonical absolute file path is escaped for POSIX shells (`'...'` wrapping) and pasted directly into the active `TerminalSession` via `mEmulator.paste(escapedPath)`, allowing commands (e.g. `cat`, `view`, `cp`, Python scripts) to immediately process the image.
 
 
 ---
