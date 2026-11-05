@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:system-event-receivers-and-intents-audit",
+  "claims": [
+    {
+      "id": "claim_system_event_receiver_package_updates",
+      "statement": "SystemEventReceiver listens dynamically to ACTION_PACKAGE_ADDED, REMOVED, and REPLACED for plugin packages, updating termux.env via TermuxShellEnvironment.writeEnvironmentToFile.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/event/SystemEventReceiver.java#L32-L89",
+          "version": "repo-lines-v1:sha256:system-event-receiver"
+        }
+      ]
+    },
+    {
+      "id": "claim_termux_open_receiver_content_provider_security",
+      "statement": "TermuxOpenReceiver handles URL and file dispatching from CLI termux-open, while its ContentProvider restricts external path traversal and forces read-only mode on termux.properties.",
+      "evidence": [
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxOpenReceiver.java#L34-L125",
+          "version": "repo-lines-v1:sha256:termux-open-receiver"
+        },
+        {
+          "resource": "repo://app/src/main/java/com/termux/app/TermuxOpenReceiver.java#L203-L234",
+          "version": "repo-lines-v1:sha256:termux-content-provider"
+        }
+      ]
+    },
+    {
+      "id": "claim_phantom_process_mitigation",
+      "statement": "PhantomProcessUtils inspects ActivityManager MAX_PHANTOM_PROCESSES and settings_enable_monitor_phantom_procs feature flags on Android 12+.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/android/PhantomProcessUtils.java#L33-L85",
+          "version": "repo-lines-v1:sha256:phantom-process-utils"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T17:40:00.000Z"
+  }
+}

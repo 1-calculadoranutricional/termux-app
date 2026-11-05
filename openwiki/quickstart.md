@@ -27,6 +27,7 @@ Use this guide to navigate across the major domains of the Termux App codebase. 
 - **[Modules and Dependencies](architecture/modules-and-dependencies.md)**: Breakdown of Gradle modules (`:app`, `:terminal-emulator`, `:terminal-view`, `:termux-shared`), inter-module dependencies, and library integration.
 - **[TermuxService & Background Runtime Architecture](architecture/service-and-background-runtime.md)**: Foreground service lifecycle, headless multi-client session management, wakelocks, and persistent notification actions.
 - **[Crash Handling & Diagnostics](architecture/crash-handling-and-diagnostics.md)**: Uncaught exception handling (`CrashHandler`), forensic telemetry (`TermuxCrashUtils`), notification alerts, and Markwon-powered markdown reports (`ReportActivity`).
+- **[System Event Receivers & Open Intent Dispatching](architecture/system-event-receivers-and-intents.md)**: System broadcast lifecycle management (`SystemEventReceiver`), package updates, boot triggers, `termux-open` file sharing, and Android 12+ phantom process handling.
 
 ### Core Emulation & UI Concepts
 - **[Terminal Emulation Engine](concepts/terminal-emulation.md)**: DEC VT/ANSI escape sequence processing, screen buffer management (`TerminalBuffer`, `TerminalRow`), color schemes, and screen text handling.
@@ -35,6 +36,8 @@ Use this guide to navigate across the major domains of the Termux App codebase. 
 - **[Virtual Keyboard & Extra Keys Toolbar](concepts/virtual-keyboard-and-extra-keys.md)**: On-screen extra keys bar (`ExtraKeysView`), modifier state machine (Ctrl, Alt, Fn), swipe macros, and `termux.properties` key mapping.
 - **[Settings & Properties Architecture](concepts/settings-and-preferences.md)**: Dual-tier configuration model (`TermuxAppSharedPreferences` GUI vs `termux.properties` dotfile) and live styling reload pipeline (`ACTION_RELOAD_STYLE`).
 - **[Subprocess IPC & Android Manager Socket Server](concepts/ipc-and-socket-server.md)**: Native `AF_UNIX` domain socket server (`AmSocketServer`), `SO_PEERCRED` security verification, and high-performance `am` intent execution.
+- **[Shell Environment & Background Execution Subsystem](concepts/shell-environment-and-execution.md)**: Hierarchical POSIX and Android shell environment synthesis (`IShellEnvironment`), non-interactive `AppShell` process execution, and `StreamGobbler` stream handling.
+- **[Filesystem & POSIX Dispatcher Subsystem](concepts/filesystem-and-posix-dispatcher.md)**: Low-level POSIX filesystem inspection, `NativeDispatcher` syscall bridging (`stat`/`lstat`), `FileAttributes` metadata extraction, and safe file operations.
 
 ### Workflows & Execution
 - **[Terminal Session Lifecycle](workflows/session-lifecycle.md)**: End-to-end flow of terminal session creation (`TerminalSession`), process execution via `TermuxTerminalSessionClient`, background execution, and destruction.

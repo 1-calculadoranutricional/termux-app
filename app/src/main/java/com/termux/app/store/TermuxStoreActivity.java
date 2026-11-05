@@ -719,7 +719,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "# ------------------------------------------------------------------------------\n" +
             "# Aliases\n" +
             "# ------------------------------------------------------------------------------\n" +
+            "alias x=\"exit\"\n" +
             "alias X=\"exit\"\n" +
+            "alias c=\"clear\"\n" +
             "alias C=\"clear\"\n" +
             "alias Cd=\"cd\"\n" +
             "alias Cat=\"cat\"\n" +
@@ -802,7 +804,9 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "# ------------------------------------------------------------------------------\n" +
             "# Aliases\n" +
             "# ------------------------------------------------------------------------------\n" +
+            "alias x=\"exit\"\n" +
             "alias X=\"exit\"\n" +
+            "alias c=\"clear\"\n" +
             "alias C=\"clear\"\n" +
             "alias Cd=\"cd\"\n" +
             "alias Cat=\"cat\"\n" +

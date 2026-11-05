@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:filesystem-and-posix-dispatcher-audit",
+  "claims": [
+    {
+      "id": "claim_native_dispatcher_syscall_bridge",
+      "statement": "NativeDispatcher provides low-level bridging to android.system.Os stat, lstat, and fstat syscalls, distinguishing symbolic links and handling ErrnoException.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/file/filesystem/NativeDispatcher.java#L10-L58",
+          "version": "repo-lines-v1:sha256:native-dispatcher"
+        }
+      ]
+    },
+    {
+      "id": "claim_file_attributes_struct_stat_mapping",
+      "statement": "FileAttributes models the Linux struct stat fields including mode bits, device and inode IDs, ownership (uid/gid), and nanosecond timestamps.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/file/filesystem/FileAttributes.java#L45-L120",
+          "version": "repo-lines-v1:sha256:file-attributes"
+        },
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/file/filesystem/FilePermissions.java#L15-L60",
+          "version": "repo-lines-v1:sha256:file-permissions"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T17:40:00.000Z"
+  }
+}

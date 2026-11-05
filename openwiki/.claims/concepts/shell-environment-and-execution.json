@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:shell-environment-and-execution-audit",
+  "claims": [
+    {
+      "id": "claim_shell_environment_hierarchical_layering",
+      "statement": "IShellEnvironment defines the contract for shell environment setup, extended hierarchically across UnixShellEnvironment, AndroidShellEnvironment, and TermuxShellEnvironment to inject PREFIX, HOME, and PATH variables.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/shell/command/environment/IShellEnvironment.java#L12-L52",
+          "version": "repo-lines-v1:sha256:ishell-environment"
+        },
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/termux/shell/command/environment/TermuxShellEnvironment.java#L24-L96",
+          "version": "repo-lines-v1:sha256:termux-shell-env"
+        }
+      ]
+    },
+    {
+      "id": "claim_app_shell_headless_execution",
+      "statement": "AppShell executes non-interactive background commands using Runtime.exec(), piping stdout and stderr through daemon StreamGobbler reader threads to avoid buffer deadlocks and delivering ResultData via ResultSender.",
+      "evidence": [
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/shell/command/runner/app/AppShell.java#L78-L150",
+          "version": "repo-lines-v1:sha256:app-shell-exec"
+        },
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/shell/StreamGobbler.java#L20-L75",
+          "version": "repo-lines-v1:sha256:stream-gobbler"
+        },
+        {
+          "resource": "repo://termux-shared/src/main/java/com/termux/shared/shell/command/result/ResultSender.java#L30-L80",
+          "version": "repo-lines-v1:sha256:result-sender"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "manual-audit",
+    "at": "2026-11-04T17:40:00.000Z"
+  }
+}

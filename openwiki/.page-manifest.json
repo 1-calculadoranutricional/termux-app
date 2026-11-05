@@ -112,6 +112,27 @@
       "completedRunId": "auditor-sync-settings-preferences",
       "gitHead": "HEAD",
       "sourceFingerprint": "sha256:settings-preferences"
+    },
+    "/openwiki/concepts/shell-environment-and-execution.md": {
+      "pageVersion": "sha256:custom-shell-env-execution-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-shell-env-execution",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:shell-env-execution"
+    },
+    "/openwiki/concepts/filesystem-and-posix-dispatcher.md": {
+      "pageVersion": "sha256:custom-filesystem-dispatcher-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-filesystem-dispatcher",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:filesystem-dispatcher"
+    },
+    "/openwiki/architecture/system-event-receivers-and-intents.md": {
+      "pageVersion": "sha256:custom-system-events-audit",
+      "completedBy": "manual-audit",
+      "completedRunId": "auditor-sync-system-events",
+      "gitHead": "HEAD",
+      "sourceFingerprint": "sha256:system-events"
     }
   }
 }

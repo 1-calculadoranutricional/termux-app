@@ -1,0 +1,6 @@
+{
+  "summary": "Plan de actualización de aliases de Zsh en Termux Store (TermuxStoreActivity.java): incorporación de alias x=\"exit\", alias X=\"exit\", alias c=\"clear\" y alias C=\"clear\" tanto en la instalación inicial como en el comando de actualización del catálogo, seguido del Quality Gate (compilación limpia con compile_applet, pruebas unitarias y sincronización de codegraph).",
+  "updatedAt": "2026-11-05T02:04:10.734474157Z",
+  "requestFeedback": true,
+  "userFacing": true
+}
