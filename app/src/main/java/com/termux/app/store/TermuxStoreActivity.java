@@ -719,15 +719,10 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "# ------------------------------------------------------------------------------\n" +
             "# Aliases\n" +
             "# ------------------------------------------------------------------------------\n" +
-            "alias x=\"exit\"\n" +
             "alias X=\"exit\"\n" +
-            "alias c=\"clear\"\n" +
             "alias C=\"clear\"\n" +
-            "alias cd=\"cd\"\n" +
             "alias Cd=\"cd\"\n" +
-            "alias cat=\"cat\"\n" +
             "alias Cat=\"cat\"\n" +
-            "alias lazygit=\"lazygit\"\n" +
             "alias Lazygit=\"lazygit\"\n" +
             "alias gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
@@ -807,15 +802,10 @@ public class TermuxStoreActivity extends AppCompatActivity implements StorePacka
             "# ------------------------------------------------------------------------------\n" +
             "# Aliases\n" +
             "# ------------------------------------------------------------------------------\n" +
-            "alias x=\"exit\"\n" +
             "alias X=\"exit\"\n" +
-            "alias c=\"clear\"\n" +
             "alias C=\"clear\"\n" +
-            "alias cd=\"cd\"\n" +
             "alias Cd=\"cd\"\n" +
-            "alias cat=\"cat\"\n" +
             "alias Cat=\"cat\"\n" +
-            "alias lazygit=\"lazygit\"\n" +
             "alias Lazygit=\"lazygit\"\n" +
             "alias gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
             "alias Gemini-proxy=\"node ~/gemini-proxy.mjs\"\n" +
